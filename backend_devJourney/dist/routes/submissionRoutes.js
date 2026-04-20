@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const submissionController_1 = require("../controllers/submissionController");
+const authMiddleware_1 = require("../middleware/authMiddleware");
+const router = (0, express_1.Router)();
+router.get('/', authMiddleware_1.protect, submissionController_1.getMySubmissions);
+router.get('/pending', authMiddleware_1.protect, authMiddleware_1.teacherOrAdminOnly, submissionController_1.getPendingSubmissions);
+router.post('/', authMiddleware_1.protect, submissionController_1.submitChallenge);
+router.put('/:submissionId/validate', authMiddleware_1.protect, authMiddleware_1.teacherOrAdminOnly, submissionController_1.validateSubmission);
+exports.default = router;

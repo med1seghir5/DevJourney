@@ -1,14 +1,21 @@
 {
   "compilerOptions": {
-    "target": "ES6",
+    "target": "ES2020", // Plus moderne que ES6, recommandé pour Node.js récent
     "module": "CommonJS",
     "rootDir": "./",
     "outDir": "./dist",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "moduleResolution": "node"
   },
-  "include": ["**/*.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts"
+  ]
 }
