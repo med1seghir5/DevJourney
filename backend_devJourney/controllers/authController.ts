@@ -160,6 +160,7 @@ export const verifyOTP = async (req: Request, res: Response): Promise<void> => {
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
+    console.log(`Login attempt for: ${email}`);
 
     if (!email || !password) {
       res.status(400).json({ message: 'Please provide email and password' });
@@ -167,6 +168,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 
     const user = await User.findOne({ email });
+    console.log(`User found: ${!!user}`);
 
     if (!user || !user.password) {
       res.status(401).json({ message: 'Invalid credentials' });
@@ -174,6 +176,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 
     const isMatch = await bcryptjs.compare(password, user.password);
+    console.log(`Password match: ${isMatch}`);
 
     if (!isMatch) {
       res.status(401).json({ message: 'Invalid credentials' });
@@ -182,7 +185,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     const jwtSecret = process.env.JWT_SECRET;
     const refreshSecret = process.env.REFRESH_TOKEN_SECRET || 'refresh_secret';
-    if (!jwtSecret) throw new Error('JWT_SECRET is not defined');
+    console.log(`JWT_SECRET defined: ${!!jwtSecret}`);
+    
+    if (!jwtSecret) {
+       console.error("CRITICAL: JWT_SECRET is missing in environment variables");
+       throw new Error('JWT_SECRET is not defined');
+    }
 
     const token = jwt.sign(
       { userId: user._id, email: user.email, role: user.role },
@@ -222,7 +230,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       token,
     });
   } catch (error: any) {
-    console.error('Login error:', error);
+    console.error('SERVER LOGIN ERROR:', error);
     res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 };

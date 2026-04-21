@@ -8,6 +8,7 @@ import api from '@/lib/api';
 import LegoCard from '@/components/ui/LegoCard';
 import LegoButton from '@/components/ui/LegoButton';
 import LegoBadge from '@/components/ui/LegoBadge';
+import SubmissionsSection from '@/components/dashboard/SubmissionsSection';
 
 export default function DashboardPage() {
   const { user, isAuthenticated, logout, checkAuth } = useAuthStore();
@@ -15,7 +16,6 @@ export default function DashboardPage() {
   const [challenges, setChallenges] = React.useState<any[]>([]);
   const [leaderboard, setLeaderboard] = React.useState<any[]>([]);
   const [subCount, setSubCount] = React.useState(0);
-  const [pendingSubs, setPendingSubs] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const router = useRouter();
   const hasFetchedRef = React.useRef(false);
@@ -40,20 +40,10 @@ export default function DashboardPage() {
     setLoading(true);
     try {
       const calls: Promise<any>[] = [fetchChallenges(), fetchLeaderboard(), fetchMySubmissions()];
-      if (user?.role === 'teacher' || user?.role === 'admin') {
-        calls.push(fetchPendingSubmissions());
-      }
       await Promise.all(calls);
     } finally {
       setLoading(false);
     }
-  };
-
-  const fetchPendingSubmissions = async () => {
-    try {
-      const res = await api.get('/submissions/pending');
-      if (res.data.success) setPendingSubs(res.data.data);
-    } catch (err) { console.error(err); }
   };
 
   const fetchChallenges = async () => {
@@ -77,20 +67,8 @@ export default function DashboardPage() {
     } catch (err) { console.error(err); }
   };
 
-  const handleReview = async (subId: string, status: 'approved' | 'rejected') => {
-    setPendingSubs(prev => prev.filter(s => s._id !== subId));
-    try {
-      await api.put(`/submissions/${subId}/validate`, { status });
-      fetchPendingSubmissions();
-      fetchLeaderboard();
-    } catch {
-      alert('Review failed');
-      fetchPendingSubmissions();
-    }
-  };
-
   const handleLogout = async () => {
-    try { await api.post('/auth/logout'); } catch {}
+    try { await api.post('/auth/logout'); } catch { }
     logout();
     router.push('/');
   };
@@ -98,10 +76,10 @@ export default function DashboardPage() {
   const myRank = leaderboard.findIndex(u => u._id === user?._id) + 1;
   const displayRank = myRank > 0 ? `#${myRank}` : '--';
   const dynamicStats = [
-    { label: 'RANK',        value: displayRank,                                  color: 'blue',   sub: 'GLOBAL POSITION' },
-    { label: 'CHALLENGES',  value: user?.completedChallenges?.toString() || '0', color: 'yellow', sub: 'COMPLETED' },
-    { label: 'SUBMISSIONS', value: subCount.toString(),                           color: 'green',  sub: 'TOTAL ATTEMPTS' },
-    { label: 'XP',          value: (user?.xp || 0).toString(),                   color: 'orange', sub: 'TOTAL POINTS' },
+    { label: 'RANK', value: displayRank, color: 'blue', sub: 'GLOBAL POSITION' },
+    { label: 'CHALLENGES', value: user?.completedChallenges?.toString() || '0', color: 'yellow', sub: 'COMPLETED' },
+    { label: 'SUBMISSIONS', value: subCount.toString(), color: 'green', sub: 'TOTAL ATTEMPTS' },
+    { label: 'XP', value: (user?.xp || 0).toString(), color: 'orange', sub: 'TOTAL POINTS' },
   ];
 
   if (!mounted || !isAuthenticated) return null;
@@ -205,35 +183,9 @@ export default function DashboardPage() {
               </div>
             </section>
 
-            {(user?.role === 'teacher' || user?.role === 'admin') && pendingSubs.length > 0 && (
+            {(user?.role === 'teacher' || user?.role === 'admin') && (
               <section className="animate-brick">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="h-1 flex-grow bg-gradient-to-r from-lego-red to-transparent" />
-                  <h2 className="font-pixel text-lg text-lego-red whitespace-nowrap uppercase">Pending Reviews ({pendingSubs.length})</h2>
-                  <div className="h-1 w-20 bg-lego-red/20" />
-                </div>
-                <div className="space-y-4">
-                  {pendingSubs.map((sub) => (
-                    <LegoCard key={sub._id} variant="dark" className="border-l-8 border-lego-red">
-                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-pixel text-[8px] text-lego-yellow uppercase">{sub.userId?.username}</span>
-                            <span className="text-white/20">|</span>
-                            <span className="font-pixel text-[8px] text-white/50 uppercase">{sub.challengeId?.title}</span>
-                          </div>
-                          <a href={sub.githubRepoLink} target="_blank" rel="noreferrer" className="font-retro text-lg text-lego-blue hover:underline break-all">
-                            {sub.githubRepoLink}
-                          </a>
-                        </div>
-                        <div className="flex gap-2 w-full md:w-auto">
-                          <LegoButton variant="green" size="sm" className="flex-grow !text-[8px]" onClick={() => handleReview(sub._id, 'approved')}>APPROVE ✅</LegoButton>
-                          <LegoButton variant="red" size="sm" className="flex-grow !text-[8px]" onClick={() => handleReview(sub._id, 'rejected')}>REJECT ❌</LegoButton>
-                        </div>
-                      </div>
-                    </LegoCard>
-                  ))}
-                </div>
+                <SubmissionsSection />
               </section>
             )}
 

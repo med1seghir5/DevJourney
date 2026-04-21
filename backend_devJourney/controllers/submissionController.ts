@@ -38,9 +38,19 @@ export const submitChallenge = async (req: any, res: Response): Promise<void> =>
 export const getMySubmissions = async (req: any, res: Response): Promise<void> => {
   try {
     const userId = req.user._id;
-    const submissions = await Submission.find({ userId })
-      .populate('challengeId', 'title difficulty')
-      .sort({ submissionDate: -1 });
+    const isTeacher = req.user.role === 'teacher' || req.user.role === 'admin';
+
+    let submissions;
+    if (isTeacher) {
+      submissions = await Submission.find({})
+        .populate('userId', 'username email')
+        .populate('challengeId', 'title difficulty')
+        .sort({ createdAt: -1 });
+    } else {
+      submissions = await Submission.find({ userId })
+        .populate('challengeId', 'title difficulty')
+        .sort({ createdAt: -1 });
+    }
 
     res.status(200).json({
       success: true,
@@ -106,5 +116,50 @@ export const validateSubmission = async (req: any, res: Response): Promise<void>
   } catch (error) {
     console.error('validateSubmission error:', error);
     res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const getAllSubmissions = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const submissions = await Submission.find({})
+      .populate('userId', 'username email')
+      .populate('challengeId', 'title difficulty')
+      .sort({ createdAt: -1 });
+
+    console.log(`[DEBUG] getAllSubmissions: Found ${submissions.length} total submissions in database.`);
+    
+    res.status(200).json({
+      success: true,
+      count: submissions.length,
+      data: submissions,
+    });
+  } catch (error) {
+    console.error('getAllSubmissions error:', error);
+    res.status(500).json({ message: 'Failed to fetch all submissions' });
+  }
+};
+
+export const getUserSubmissionsByUsername = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { username } = req.params;
+    const user = await User.findOne({ username });
+    
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    const submissions = await Submission.find({ userId: user._id })
+      .populate('challengeId', 'title difficulty')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: submissions.length,
+      data: submissions,
+    });
+  } catch (error) {
+    console.error('getUserSubmissionsByUsername error:', error);
+    res.status(500).json({ message: 'Failed to fetch user submissions' });
   }
 };
