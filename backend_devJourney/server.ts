@@ -13,6 +13,7 @@ app.set('trust proxy', 1);
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
+  'https://devjourney-gdg.vercel.app',
   'https://devjourney-gray.vercel.app',
   process.env.FRONTEND_URL
 ].filter(Boolean);
@@ -22,7 +23,8 @@ app.use(cors({
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      console.log(`CORS blocked for origin: ${origin}`);
+      callback(null, false);
     }
   },
   credentials: true,

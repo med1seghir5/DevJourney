@@ -2,7 +2,7 @@
 
 DevJourney is a gamified full-stack platform designed for developers to master their craft through real-world missions. Built with a stunning LEGO and Minecraft-inspired aesthetic, it turns the learning process into an epic building adventure.
 
-![DevJourney Preview](https://devjourney-gray.vercel.app/logo.png)
+![DevJourney Preview](https://devjourney-gray.vercel.app/readmeFile.png)
 
 ## 🚀 Concept
 DevJourney bridges the gap between learning and doing. Builders (users) take on missions, submit their solutions via GitHub, and earn XP to climb the global leaderboard. The platform features a specialized interface for Teachers to review and validate submissions, ensuring high-quality learning.
@@ -83,4 +83,3 @@ The UI is built using a custom "Lego Design System", utilizing:
 - **LegoButton**: Interactive blocks with press-down animations.
 - **Pixel Typography**: Use of *Press Start 2P* and *VT323* Google Fonts.
 - **Vibrant Color Palette**: LEGO Blue, Yellow, Red, and Green.
-
