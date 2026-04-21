@@ -109,11 +109,10 @@ export default function SubmissionsSection() {
                       </a>
                     </td>
                     <td className="py-3 px-2 border-y-2 border-black/5 text-center">
-                      <span className={`font-pixel text-[7px] px-2 py-1 border ${
-                        sub.status === 'approved' ? 'border-lego-green text-lego-green' :
-                        sub.status === 'rejected' ? 'border-lego-red text-lego-red' :
-                        'border-lego-yellow text-lego-yellow'
-                      }`}>
+                      <span className={`font-pixel text-[7px] px-2 py-1 border ${sub.status === 'approved' ? 'border-lego-green text-lego-green' :
+                          sub.status === 'rejected' ? 'border-lego-red text-lego-red' :
+                            'border-lego-yellow text-lego-yellow'
+                        }`}>
                         {sub.status.toUpperCase()}
                       </span>
                     </td>
@@ -126,11 +125,11 @@ export default function SubmissionsSection() {
                     <td className="py-3 px-2 border-y-2 border-r-2 border-black/5 last:rounded-r-sm text-right">
                       {sub.status === 'pending' ? (
                         <div className="flex justify-end gap-1">
-                          <LegoButton variant="green" size="xs" onClick={() => handleValidate(sub._id, 'approved')}>OK</LegoButton>
-                          <LegoButton variant="red" size="xs" onClick={() => handleValidate(sub._id, 'rejected')}>NO</LegoButton>
+                          <LegoButton variant="green" size="sm" onClick={() => handleValidate(sub._id, 'approved')}>OK</LegoButton>
+                          <LegoButton variant="red" size="sm" onClick={() => handleValidate(sub._id, 'rejected')}>NO</LegoButton>
                         </div>
                       ) : (
-                        <button 
+                        <button
                           onClick={() => handleValidate(sub._id, sub.status === 'approved' ? 'rejected' : 'approved')}
                           className="font-pixel text-[6px] text-gray-500 hover:text-white underline"
                         >
