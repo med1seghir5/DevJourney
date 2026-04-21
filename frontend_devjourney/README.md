@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🧱 DevJourney - Frontend
 
-## Getting Started
+![DevJourney Logo](./public/logo.png)
 
-First, run the development server:
+DevJourney is an interactive, gamified platform designed for developers to master coding skills, complete real-world missions, and climb the global leaderboard. Modeled with a nostalgic 8-bit, LEGO, and Minecraft-inspired aesthetic, learning to code has never been more fun!
+
+## 🚀 Features
+
+- **Gamified Aesthetics**: A stunning retro UI featuring pixel fonts, vibrant colors, blocky shapes, and satisfying micro-animations.
+- **Challenge Dashboard**: An immersive dashboard displaying active challenges depending on your current track (Web, Mobile, Backend, AI).
+- **Global Leaderboard**: Compete with other builders. Climb the ranks to earn your golden crown!
+- **Mission Submissions**: Submit your GitHub repository links to complete challenges. Admins & Teachers can validate missions and award XP.
+- **Persistent Auth**: Secure system with JSON Web Tokens (JWT) handled carefully via Zustand's state management & LocalStorage memory.
+
+## 💻 Tech Stack
+
+- **Framework**: [Next.js 15](https://nextjs.org/) (App Router, Turbopack)
+- **Library**: [React 19](https://react.dev/)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
+- **State Management**: [Zustand](https://zustand-demo.pmnd.rs/) with persist middleware
+- **Data Fetching**: [Axios](https://axios-http.com/)
+- **Form Validation**: [React Hook Form](https://react-hook-form.com/) & [Zod](https://zod.dev/)
+
+## 🏗️ Getting Started
+
+### Prerequisites
+
+Make sure you have Node.js version 18.17+ installed on your system.
+
+### Installation
+
+1. Clone the repository and navigate to the frontend directory:
+   ```bash
+   cd frontend_devjourney
+   ```
+
+2. Install all the dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Configure your environmental variables. Create a `.env.local` file at the root of the frontend folder:
+   ```env
+   NEXT_PUBLIC_API_URL=http://localhost:5000/api
+   ```
+   *(Update the URL when running the app in production, e.g., `https://your-backend-url.onrender.com/api`)*
+
+4. Run the development server!
+   ```bash
+   npm run dev
+   ```
+
+5. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## 📂 Project Structure
+
+- `app/` - The Next.js 15 App router structure. Pages (`login`, `register`, `dashboard`, `challenges`, `leaderboard`, etc.).
+- `components/ui/` - Highly reusable core UI elements (LegoButton, LegoCard, LegoBadge, LegoInput).
+- `components/layout/` - Wrapper components such as the dynamic Navbar.
+- `lib/api.ts` - Centralized Axios singleton intercepting requests to inject secure Bearer JWT formats.
+- `store/authStore.ts` - Local cache implementation maintaining user session state across refreshes.
+
+## 🚀 Deployment
+
+The smartest way to deploy this Next.js project is on [Vercel](https://vercel.com).
+Be sure to declare your environment variable under your Project Settings in Vercel before the build initiates.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+*Built with Bricks & Code.* 🧱
