@@ -2,12 +2,12 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useAuthStore } from '@/store/authStore';
+import api from '@/lib/api';
 import LegoCard from '@/components/ui/LegoCard';
 import LegoButton from '@/components/ui/LegoButton';
 import LegoBadge from '@/components/ui/LegoBadge';
-import { useAuthStore } from '@/store/authStore';
-import api from '@/lib/api';
-import Link from 'next/link';
 
 export default function DashboardPage() {
   const { user, isAuthenticated, logout, checkAuth } = useAuthStore();
@@ -18,21 +18,23 @@ export default function DashboardPage() {
   const [pendingSubs, setPendingSubs] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const router = useRouter();
+  const hasFetchedRef = React.useRef(false);
 
-  // Step 1: Verify auth ONCE on mount
   React.useEffect(() => {
-    checkAuth().then(() => setMounted(true));
+    let cancelled = false;
+    checkAuth().then(() => {
+      if (cancelled) return;
+      setMounted(true);
+      const { isAuthenticated: authed } = useAuthStore.getState();
+      if (!authed) {
+        router.push('/auth/login');
+      } else if (!hasFetchedRef.current) {
+        hasFetchedRef.current = true;
+        fetchAllData();
+      }
+    });
+    return () => { cancelled = true; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Step 2: After mount, redirect if not authenticated. Otherwise fetch data.
-  React.useEffect(() => {
-    if (!mounted) return;
-    if (!isAuthenticated) {
-      router.push('/auth/login');
-    } else {
-      fetchAllData();
-    }
-  }, [mounted, isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchAllData = async () => {
     setLoading(true);
@@ -76,14 +78,13 @@ export default function DashboardPage() {
   };
 
   const handleReview = async (subId: string, status: 'approved' | 'rejected') => {
-    // Optimistic update
     setPendingSubs(prev => prev.filter(s => s._id !== subId));
     try {
       await api.put(`/submissions/${subId}/validate`, { status });
       fetchPendingSubmissions();
       fetchLeaderboard();
     } catch {
-      alert("Review failed");
+      alert('Review failed');
       fetchPendingSubmissions();
     }
   };
@@ -94,28 +95,24 @@ export default function DashboardPage() {
     router.push('/');
   };
 
-  // Derived values
   const myRank = leaderboard.findIndex(u => u._id === user?._id) + 1;
   const displayRank = myRank > 0 ? `#${myRank}` : '--';
   const dynamicStats = [
-    { label: 'RANK',        value: displayRank,                            color: 'blue',   sub: 'GLOBAL POSITION' },
-    { label: 'CHALLENGES',  value: user?.completedChallenges?.toString() || '0', color: 'yellow', sub: 'COMPLETED'      },
-    { label: 'SUBMISSIONS', value: subCount.toString(),                    color: 'green',  sub: 'TOTAL ATTEMPTS'  },
-    { label: 'XP',          value: (user?.xp || 0).toString(),             color: 'orange', sub: 'TOTAL POINTS'    },
+    { label: 'RANK',        value: displayRank,                                  color: 'blue',   sub: 'GLOBAL POSITION' },
+    { label: 'CHALLENGES',  value: user?.completedChallenges?.toString() || '0', color: 'yellow', sub: 'COMPLETED' },
+    { label: 'SUBMISSIONS', value: subCount.toString(),                           color: 'green',  sub: 'TOTAL ATTEMPTS' },
+    { label: 'XP',          value: (user?.xp || 0).toString(),                   color: 'orange', sub: 'TOTAL POINTS' },
   ];
 
-  // Don't render anything until auth check is complete
   if (!mounted || !isAuthenticated) return null;
 
   return (
     <div className="min-h-screen bg-pixel-grass p-4 md:p-8 relative overflow-hidden">
-      {/* Background Floating Bricks */}
       <div className="absolute top-20 right-[10%] w-16 h-16 bg-lego-yellow border-4 border-yellow-700 rounded-brick opacity-10 animate-float pointer-events-none" />
       <div className="absolute bottom-40 left-[5%] w-12 h-12 bg-lego-blue border-4 border-blue-900 rounded-brick opacity-5 animate-float pointer-events-none" style={{ animationDelay: '2s' }} />
       <div className="absolute top-1/2 left-[40%] w-8 h-8 bg-lego-red border-4 border-red-900 rounded-brick opacity-5 animate-float pointer-events-none" style={{ animationDelay: '4s' }} />
 
       <div className="max-w-7xl mx-auto space-y-10 relative z-10">
-        {/* Header */}
         <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 animate-brick">
           <div>
             <div className="flex items-center gap-3 mb-2">
@@ -151,7 +148,6 @@ export default function DashboardPage() {
           </div>
         </header>
 
-        {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
           {dynamicStats.map((stat, i) => (
             <div key={i} className="group animate-brick" style={{ animationDelay: `${0.1 + i * 0.1}s` }}>
@@ -174,9 +170,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
           <div className="lg:col-span-2 space-y-8 animate-brick" style={{ animationDelay: '0.6s' }}>
-            {/* Recent Missions */}
             <section>
               <div className="flex items-center gap-4 mb-6">
                 <div className="h-1 flex-grow bg-gradient-to-r from-lego-blue to-transparent" />
@@ -205,13 +199,12 @@ export default function DashboardPage() {
                   ))
                 ) : (
                   <div className="col-span-full py-10 text-center">
-                    <p className="font-pixel text-[10px] text-gray-500">NO NEW MISSIONS FROM TEACHERS...</p>
+                    <p className="font-pixel text-[10px] text-gray-500">NO MISSIONS AVAILABLE YET.</p>
                   </div>
                 )}
               </div>
             </section>
 
-            {/* Pending Reviews (Teacher/Admin only) */}
             {(user?.role === 'teacher' || user?.role === 'admin') && pendingSubs.length > 0 && (
               <section className="animate-brick">
                 <div className="flex items-center gap-4 mb-6">
@@ -244,7 +237,6 @@ export default function DashboardPage() {
               </section>
             )}
 
-            {/* Bonus XP Card */}
             <LegoCard variant="blue" className="bg-gradient-to-br from-lego-blue to-blue-900 border-none shadow-2xl">
               <div className="flex items-center justify-between">
                 <div>
@@ -256,9 +248,7 @@ export default function DashboardPage() {
             </LegoCard>
           </div>
 
-          {/* Sidebar */}
           <div className="space-y-8 animate-brick" style={{ animationDelay: '0.8s' }}>
-            {/* Leaderboard */}
             <LegoCard variant="dark" className="bg-lego-dark/80 backdrop-blur-sm">
               <div className="flex items-center justify-between mb-8 pb-4 border-b-4 border-black/40">
                 <h2 className="font-pixel text-[10px] text-white">LEADERBOARD</h2>
@@ -290,7 +280,6 @@ export default function DashboardPage() {
               </Link>
             </LegoCard>
 
-            {/* Progress */}
             <LegoCard variant="green">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="font-pixel text-[10px]">BUILDER PROGRESS</h2>
@@ -313,7 +302,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Floating Logout Button */}
       <button onClick={handleLogout} className="fixed bottom-8 right-8 group z-50 flex items-center gap-3">
         <div className="bg-black/80 backdrop-blur-sm px-4 py-2 border-2 border-lego-red font-pixel text-[8px] text-white opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
           LOGOUT SESSION

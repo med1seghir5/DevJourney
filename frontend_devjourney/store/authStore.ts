@@ -10,6 +10,7 @@ interface User {
   role: string;
   xp?: number;
   completedChallenges?: number;
+  createdAt?: string;
 }
 
 interface AuthState {
@@ -21,25 +22,17 @@ interface AuthState {
   checkAuth: () => Promise<void>;
 }
 
-// Keep a stable reference to checkAuth outside of re-renders
 let _checkAuthPromise: Promise<void> | null = null;
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       user: null,
       isAuthenticated: false,
       setUser: (user) => set({ user }),
       setAuthenticated: (status) => set({ isAuthenticated: status }),
-      logout: () => {
-        set({ user: null, isAuthenticated: false });
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('accessToken');
-        }
-      },
-      // Stable function — does NOT change reference on every state update
+      logout: () => set({ user: null, isAuthenticated: false }),
       checkAuth: async () => {
-        // Deduplicate concurrent calls
         if (_checkAuthPromise) return _checkAuthPromise;
         _checkAuthPromise = (async () => {
           try {
@@ -54,14 +47,12 @@ export const useAuthStore = create<AuthState>()(
                 role: user.role,
                 xp: user.xp ?? 0,
                 completedChallenges: user.completedChallenges ?? 0,
+                createdAt: user.createdAt,
               },
               isAuthenticated: true,
             });
           } catch {
             set({ user: null, isAuthenticated: false });
-            if (typeof window !== 'undefined') {
-              localStorage.removeItem('accessToken');
-            }
           } finally {
             _checkAuthPromise = null;
           }
@@ -69,8 +60,6 @@ export const useAuthStore = create<AuthState>()(
         return _checkAuthPromise;
       },
     }),
-    {
-      name: 'auth-storage',
-    }
+    { name: 'auth-storage' }
   )
 );

@@ -1,34 +1,39 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
+  baseURL: '/api',
   withCredentials: true,
 });
 
-api.interceptors.request.use((config) => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+let _isRefreshing = false;
 
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      try {
-        const res = await axios.post(`${api.defaults.baseURL}/auth/refresh-token`, {}, { withCredentials: true });
 
-        const { accessToken } = res.data;
-        localStorage.setItem('accessToken', accessToken);
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+    const isAuthRoute =
+      typeof window !== 'undefined' &&
+      (window.location.pathname.startsWith('/auth/login') ||
+        window.location.pathname.startsWith('/auth/register'));
+
+    const isRefreshRequest = originalRequest?.url?.includes('/auth/refresh-token');
+
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !isRefreshRequest &&
+      !_isRefreshing
+    ) {
+      originalRequest._retry = true;
+      _isRefreshing = true;
+      try {
+        await axios.post('/api/auth/refresh-token', {}, { withCredentials: true });
+        _isRefreshing = false;
         return api(originalRequest);
-      } catch (err) {
-        localStorage.removeItem('accessToken');
-        if (typeof window !== 'undefined') {
+      } catch {
+        _isRefreshing = false;
+        if (!isAuthRoute && typeof window !== 'undefined') {
           window.location.href = '/auth/login';
         }
       }

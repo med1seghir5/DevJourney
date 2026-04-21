@@ -2,27 +2,33 @@
 
 import React from 'react';
 import Link from 'next/link';
-import LegoCard from '@/components/ui/LegoCard';
-import LegoInput from '@/components/ui/LegoInput';
-import LegoButton from '@/components/ui/LegoButton';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useAuthStore } from '@/store/authStore';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
-
+import LegoCard from '@/components/ui/LegoCard';
+import LegoInput from '@/components/ui/LegoInput';
+import LegoButton from '@/components/ui/LegoButton';
 
 const loginSchema = z.object({
-  email: z.string().email("INVALID BRAIN DATA (EMAIL)"),
-  password: z.string().min(6, "PASSWORD TOO SHORT (MIN 6 BRICKS)"),
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const { setAuthenticated, setUser } = useAuthStore();
+  const { setAuthenticated, setUser, isAuthenticated } = useAuthStore();
   const router = useRouter();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => { setMounted(true); }, []);
+
+  React.useEffect(() => {
+    if (mounted && isAuthenticated) router.push('/dashboard');
+  }, [mounted, isAuthenticated, router]);
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -30,28 +36,18 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginForm) => {
     try {
-      console.log("Logging in...", data);
       const response = await api.post('/auth/login', data);
-      
       if (response.status === 200) {
-        const { user, token } = response.data;
-        setUser({
-          id: user._id,
-          username: user.username,
-          email: user.email,
-          role: user.role
-        });
+        const { user } = response.data;
+        setUser({ id: user._id, username: user.username, email: user.email, role: user.role });
         setAuthenticated(true);
-        localStorage.setItem('accessToken', token);
         router.push('/dashboard');
       }
     } catch (error: any) {
-      console.error("Login error:", error);
-      const errorMsg = error.response?.data?.message || "ÉCHEC DE CONNEXION";
-      alert(`ERREUR: ${errorMsg}`);
+      const errorMsg = error.response?.data?.message || 'Login failed';
+      alert(`Error: ${errorMsg}`);
     }
   };
-
 
   return (
     <div className="min-h-screen bg-pixel-grass flex items-center justify-center p-4">
@@ -76,7 +72,6 @@ export default function LoginPage() {
               {...register('password')}
               error={errors.password?.message}
             />
-
             <div className="pt-4">
               <LegoButton variant="blue" className="w-full !text-lego-green" type="submit">
                 LOGIN 🧱

@@ -4,19 +4,15 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import connectDB from './config/db';
 
-// Configuration des variables d'environnement
 dotenv.config();
 
-// Initialisation de l'application
 const app = express();
 
-// Middleware
 app.use(cors({
   origin: ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true,
 }));
 
-// Logger simple pour voir les requêtes entrantes
 app.use((req: Request, res: Response, next: NextFunction) => {
   console.log(`[${new Date().toLocaleTimeString()}] ${req.method} ${req.url}`);
   next();
@@ -25,10 +21,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use(express.json());
 app.use(cookieParser());
 
-// Connexion à la base de données
 connectDB();
 
-// Routes
 import authRoutes from './routes/authRoutes';
 import challengeRoutes from './routes/challengeRoutes';
 import submissionRoutes from './routes/submissionRoutes';
@@ -41,14 +35,12 @@ app.use('/api/submissions', submissionRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/users', userRoutes);
 
-// Routes de test
 app.get('/', (req: Request, res: Response) => {
-  res.send('API DevJourney en ligne...');
+  res.send('DevJourney API is running');
 });
 
-// Port
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`Serveur démarré sur le port ${PORT}`);
+  console.log(`Server started on port ${PORT}`);
 });

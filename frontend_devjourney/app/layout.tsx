@@ -16,8 +16,12 @@ const retroFont = VT323({
 });
 
 export const metadata: Metadata = {
-  title: "DevJourney | Build Your Skills. Block by Block.",
+  title: "DevJourney",
   description: "A gamified developer challenge platform styled with LEGO and Minecraft aesthetics.",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({

@@ -7,7 +7,7 @@ function cn(...inputs: ClassValue[]) {
 }
 
 interface LegoCardProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   variant?: 'red' | 'blue' | 'yellow' | 'green' | 'orange' | 'dark' | 'white';
   className?: string;
   showStuds?: boolean;

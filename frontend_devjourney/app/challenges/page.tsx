@@ -33,11 +33,7 @@ export default function ChallengesPage() {
     }
   };
 
-  const calculateXP = (diff: string) => {
-    if (diff === 'easy') return 200;
-    if (diff === 'medium') return 450;
-    return 800;
-  };
+  const calculateXP = (_diff: string) => 50;
 
   const filtered = challenges.filter(c => filter === 'ALL' || c.difficulty.toUpperCase() === filter);
 

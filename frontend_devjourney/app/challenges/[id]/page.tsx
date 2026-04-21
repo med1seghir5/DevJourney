@@ -13,34 +13,27 @@ import api from '@/lib/api';
 
 export default function ChallengeDetailPage() {
   const { id } = useParams();
-  // Read auth state from store — no checkAuth call, this is a PUBLIC page
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
 
   const [challenge, setChallenge] = React.useState<any>(null);
   const [userSubmission, setUserSubmission] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
   const [submitting, setSubmitting] = React.useState(false);
   const [githubUrl, setGithubUrl] = React.useState('');
-  const [status, setStatus] = React.useState<{ type: 'success' | 'error', msg: string } | null>(null);
+  const [status, setStatus] = React.useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
-  // Always fetch the challenge (public)
   React.useEffect(() => {
     fetchChallenge();
   }, [id]);
 
-  // Only fetch submission status if the user IS logged in
   React.useEffect(() => {
-    if (isAuthenticated) {
-      fetchMySubmission();
-    }
+    if (isAuthenticated) fetchMySubmission();
   }, [isAuthenticated, id]);
 
   const fetchChallenge = async () => {
     try {
       const response = await api.get(`/challenges/${id}`);
-      if (response.data.success) {
-        setChallenge(response.data.data);
-      }
+      if (response.data.success) setChallenge(response.data.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -56,7 +49,6 @@ export default function ChallengeDetailPage() {
         setUserSubmission(sub || null);
       }
     } catch (err) {
-      // Silently fail — user may not be logged in
       console.error(err);
     }
   };
@@ -84,7 +76,6 @@ export default function ChallengeDetailPage() {
   return (
     <div className="min-h-screen bg-pixel-grass p-4 md:p-8">
       <div className="max-w-5xl mx-auto space-y-8">
-        {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 animate-brick">
           <div>
             <Link href="/challenges" className="font-pixel text-[8px] text-lego-blue hover:text-white mb-2 inline-block">
@@ -94,18 +85,16 @@ export default function ChallengeDetailPage() {
           </div>
           <div className="flex gap-4">
             <LegoBadge variant={challenge.difficulty as any}>{challenge.difficulty.toUpperCase()}</LegoBadge>
-            <LegoBadge variant="status">{(challenge.difficulty === 'easy' ? 200 : challenge.difficulty === 'medium' ? 450 : 800)} XP</LegoBadge>
+            <LegoBadge variant="status">50 XP</LegoBadge>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Instructions — always visible */}
           <div className="lg:col-span-2 space-y-8 animate-brick" style={{ animationDelay: '0.2s' }}>
             <LegoCard variant="white" className="border-b-[12px]">
               <h2 className="font-pixel text-sm mb-6 border-b-2 border-gray-100 pb-2">📜 INSTRUCTION BOOKLET</h2>
               <div className="font-retro text-xl leading-relaxed space-y-4">
                 <p className="whitespace-pre-wrap">{challenge.description}</p>
-
                 <h3 className="font-pixel text-[10px] mt-6 text-lego-blue">MISSION PROTOCOL:</h3>
                 <ul className="list-none space-y-2">
                   <li className="flex items-center gap-2"><span className="text-lego-green">🧱</span> BUILD THE PROJECT LOCALLY</li>
@@ -116,10 +105,8 @@ export default function ChallengeDetailPage() {
             </LegoCard>
           </div>
 
-          {/* Submission Panel */}
           <div className="space-y-8 animate-brick" style={{ animationDelay: '0.4s' }}>
             <LegoCard variant="dark">
-              {/* Authenticated: show submission form */}
               {isAuthenticated ? (
                 <>
                   <h2 className="font-pixel text-sm mb-6 uppercase">SUBMIT YOUR SOLUTION</h2>
@@ -162,7 +149,6 @@ export default function ChallengeDetailPage() {
                   </form>
                 </>
               ) : (
-                /* Not authenticated: show lock message */
                 <>
                   <h2 className="font-pixel text-sm mb-6 uppercase text-lego-yellow">🔒 MISSION LOCKED</h2>
                   <p className="font-retro text-lg text-gray-400 mb-6">

@@ -92,7 +92,7 @@ export default function LeaderboardPage() {
           </div>
         ) : loading ? (
           <div className="h-64 flex items-center justify-center">
-             <div className="font-pixel text-xl text-lego-yellow animate-pulse">BUILDING RANKINGS...</div>
+            <div className="font-pixel text-xl text-lego-yellow animate-pulse">BUILDING RANKINGS...</div>
           </div>
         ) : null}
 
@@ -110,18 +110,16 @@ export default function LeaderboardPage() {
               </thead>
               <tbody className="font-retro text-xl">
                 {leaders.map((leader, i) => (
-                  <tr 
-                    key={leader._id} 
-                    className={`border-b-2 border-black/20 hover:bg-black/10 transition-colors ${
-                      leader._id === currentUser?._id ? 'bg-lego-blue/20 text-lego-yellow' : ''
-                    }`}
+                  <tr
+                    key={leader._id}
+                    className={`border-b-2 border-black/20 hover:bg-black/10 transition-colors ${leader._id === currentUser?._id ? 'bg-lego-blue/20 text-lego-yellow' : ''
+                      }`}
                   >
                     <td className="py-4 px-2 font-pixel text-xs">#{i + 1}</td>
                     <td className="py-4">
                       <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 border-2 border-black rounded-brick ${
-                          i === 0 ? 'bg-lego-yellow' : i === 1 ? 'bg-gray-400' : i === 2 ? 'bg-lego-orange' : 'bg-lego-dark'
-                        }`} />
+                        <div className={`w-8 h-8 border-2 border-black rounded-brick ${i === 0 ? 'bg-lego-yellow' : i === 1 ? 'bg-gray-400' : i === 2 ? 'bg-lego-orange' : 'bg-lego-dark'
+                          }`} />
                         {leader.username}
                         {leader._id === currentUser?._id && <span className="font-pixel text-[8px] ml-2 text-lego-green">(YOU)</span>}
                       </div>
