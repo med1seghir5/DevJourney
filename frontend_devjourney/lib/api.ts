@@ -6,6 +6,19 @@ const api = axios.create({
 });
 
 let _isRefreshing = false;
+let _token: string | null = null;
+
+export const setApiToken = (token: string | null) => {
+  _token = token;
+};
+
+// Request interceptor for token
+api.interceptors.request.use((config) => {
+  if (_token) {
+    config.headers.Authorization = `Bearer ${_token}`;
+  }
+  return config;
+});
 
 api.interceptors.response.use(
   (response) => response,
@@ -28,13 +41,16 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       _isRefreshing = true;
       try {
-        await axios.post('/api/auth/refresh-token', {}, { withCredentials: true });
+        const response = await axios.post('/api/auth/refresh-token', {}, { withCredentials: true });
+        const newToken = response.data.token;
+        if (newToken) {
+          setApiToken(newToken);
+        }
         _isRefreshing = false;
         return api(originalRequest);
       } catch {
         _isRefreshing = false;
-        // Logic removed: don't force redirect here. 
-        // Protected pages handle redirection via proxy.ts or their own logic.
+        // Don't force redirect, the page will handle it if needed
       }
     }
     return Promise.reject(error);

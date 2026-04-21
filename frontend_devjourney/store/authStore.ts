@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import api from '@/lib/api';
+import api, { setApiToken } from '@/lib/api';
 
 interface User {
   _id?: string;
@@ -15,8 +15,9 @@ interface User {
 
 interface AuthState {
   user: User | null;
+  token: string | null;
   isAuthenticated: boolean;
-  setUser: (user: User | null) => void;
+  setUser: (user: User | null, token?: string | null) => void;
   setAuthenticated: (status: boolean) => void;
   logout: () => void;
   checkAuth: () => Promise<void>;
@@ -26,12 +27,22 @@ let _checkAuthPromise: Promise<void> | null = null;
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
+      token: null,
       isAuthenticated: false,
-      setUser: (user) => set({ user }),
+      setUser: (user, token = null) => {
+        if (token) {
+          set({ user, token, isAuthenticated: true });
+          setApiToken(token);
+        } else set({ user });
+      },
       setAuthenticated: (status) => set({ isAuthenticated: status }),
-      logout: () => set({ user: null, isAuthenticated: false }),
+      logout: () => {
+        set({ user: null, token: null, isAuthenticated: false });
+        setApiToken(null);
+        localStorage.removeItem('auth-storage');
+      },
       checkAuth: async () => {
         if (_checkAuthPromise) return _checkAuthPromise;
         _checkAuthPromise = (async () => {
@@ -51,8 +62,12 @@ export const useAuthStore = create<AuthState>()(
               },
               isAuthenticated: true,
             });
-          } catch {
-            set({ user: null, isAuthenticated: false });
+          } catch (error) {
+            console.error("Check auth failed:", error);
+            // If token exists, we might want to keep authenticated state temporarily 
+            // or let the interceptor handle refresh.
+            // But if /auth/me fails, we usually aren't authenticated.
+            set({ user: null, token: null, isAuthenticated: false });
           } finally {
             _checkAuthPromise = null;
           }
@@ -60,6 +75,11 @@ export const useAuthStore = create<AuthState>()(
         return _checkAuthPromise;
       },
     }),
-    { name: 'auth-storage' }
+    { 
+      name: 'auth-storage',
+      onRehydrateStorage: () => (state) => {
+        if (state?.token) setApiToken(state.token);
+      }
+    }
   )
 );

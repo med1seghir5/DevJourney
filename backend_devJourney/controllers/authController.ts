@@ -167,12 +167,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const user = await User.findOne({ 
+    const user = await User.findOne({
       $or: [
         { email: identifier },
         { username: identifier }
       ]
-    }).lean();
+    });
     console.log(`User found: ${!!user}`);
 
     if (!user || !user.password) {

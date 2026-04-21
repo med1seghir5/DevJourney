@@ -13,7 +13,7 @@ import LegoInput from '@/components/ui/LegoInput';
 import LegoButton from '@/components/ui/LegoButton';
 
 const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  identifier: z.string().min(3, 'Email or Username must be at least 3 characters'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
@@ -36,11 +36,13 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginForm) => {
     try {
-      const response = await api.post('/auth/login', data);
+      const response = await api.post('/auth/login', {
+        identifier: data.identifier,
+        password: data.password
+      });
       if (response.status === 200) {
-        const { user } = response.data;
-        setUser({ id: user._id, username: user.username, email: user.email, role: user.role });
-        setAuthenticated(true);
+        const { user, token } = response.data;
+        setUser({ id: user._id, username: user.username, email: user.email, role: user.role }, token);
         router.push('/dashboard');
       }
     } catch (error: any) {
@@ -62,10 +64,10 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <LegoInput
-              label="EMAIL ADDRESS"
-              placeholder="e.g. steve@craft.com"
-              {...register('email')}
-              error={errors.email?.message}
+              label="EMAIL OR USERNAME"
+              placeholder="e.g. steve or steve@craft.com"
+              {...register('identifier')}
+              error={errors.identifier?.message}
             />
             <LegoInput
               label="PASSWORD"

@@ -15,13 +15,11 @@ const SubmissionSchema: Schema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true,
     },
     challengeId: {
       type: Schema.Types.ObjectId,
       ref: 'Challenge',
       required: true,
-      index: true,
     },
     githubRepoLink: {
       type: String,

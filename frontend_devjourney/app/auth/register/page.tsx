@@ -48,9 +48,8 @@ export default function RegisterPage() {
       });
 
       if (response.status === 201) {
-        const { user } = response.data;
-        setUser({ id: user._id, _id: user._id, username: user.username, email: user.email, role: user.role });
-        setAuthenticated(true);
+        const { user, token } = response.data;
+        setUser({ id: user._id, _id: user._id, username: user.username, email: user.email, role: user.role }, token);
         router.push('/dashboard');
       }
     } catch (error: any) {

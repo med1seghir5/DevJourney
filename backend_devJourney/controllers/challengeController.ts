@@ -47,8 +47,7 @@ export const getChallenges = async (req: Request, res: Response): Promise<void> 
     const challenges = await Challenge.find({})
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit)
-      .lean();
+      .limit(limit);
 
     const responseData = {
       success: true,
