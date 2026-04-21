@@ -2,9 +2,7 @@
 
 import React from 'react';
 import LegoCard from '@/components/ui/LegoCard';
-import LegoBadge from '@/components/ui/LegoBadge';
 import Link from 'next/link';
-
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 
@@ -47,12 +45,18 @@ export default function LeaderboardPage() {
           <p className="font-retro text-2xl text-lego-yellow uppercase tracking-widest">REAL-TIME GLOBAL RANKINGS</p>
         </header>
 
-        {/* Podium */}
-        {!loading && leaders.length >= 1 ? (
+        {/* Podium Section */}
+        {loading ? (
+          <div className="flex flex-col md:flex-row items-end justify-center gap-4 mb-20 px-4 animate-pulse">
+            <div className="flex-1 w-full md:w-32 h-40 bg-white/5 border-x-4 border-t-4 border-black/10 rounded-t-brick" />
+            <div className="flex-1 w-full md:w-32 h-56 bg-white/10 border-x-4 border-t-4 border-black/10 rounded-t-brick" />
+            <div className="flex-1 w-full md:w-32 h-28 bg-white/5 border-x-4 border-t-4 border-black/10 rounded-t-brick" />
+          </div>
+        ) : leaders.length >= 1 ? (
           <div className="flex flex-col md:flex-row items-end justify-center gap-4 mb-20 px-4">
             {/* 2nd Place */}
             {second && (
-              <div className="flex-1 w-full md:w-auto animate-brick" style={{ animationDelay: '0.2s' }}>
+              <div className="flex-1 w-full md:auto animate-brick" style={{ animationDelay: '0.2s' }}>
                 <div className="text-center mb-4">
                   <div className="w-16 h-16 bg-gray-400 border-4 border-black rounded-brick mx-auto mb-2 flex items-center justify-center text-xl">🥈</div>
                   <Link href={`/profile/${second.username}`} className="font-pixel text-[10px] text-white hover:text-lego-yellow transition-colors underline decoration-dotted">
@@ -67,11 +71,9 @@ export default function LeaderboardPage() {
 
             {/* 1st Place */}
             {first && (
-              <div className="flex-1 w-full md:w-auto animate-brick">
+              <div className="flex-1 w-full md:auto animate-brick">
                 <div className="text-center mb-4 scale-110">
-                  <div className="w-20 h-20 bg-lego-yellow border-4 border-black rounded-brick mx-auto mb-2 flex items-center justify-center text-3xl shadow-brick">
-                    👑
-                  </div>
+                  <div className="w-20 h-20 bg-lego-yellow border-4 border-black rounded-brick mx-auto mb-2 flex items-center justify-center text-3xl shadow-brick">👑</div>
                   <Link href={`/profile/${first.username}`} className="font-pixel text-xs text-lego-yellow uppercase hover:text-white transition-colors underline decoration-dotted">
                     {first.username}
                   </Link>
@@ -84,7 +86,7 @@ export default function LeaderboardPage() {
 
             {/* 3rd Place */}
             {third && (
-              <div className="flex-1 w-full md:w-auto animate-brick" style={{ animationDelay: '0.4s' }}>
+              <div className="flex-1 w-full md:auto animate-brick" style={{ animationDelay: '0.4s' }}>
                 <div className="text-center mb-4">
                   <div className="w-16 h-16 bg-lego-orange border-4 border-black rounded-brick mx-auto mb-2 flex items-center justify-center text-xl">🥉</div>
                   <Link href={`/profile/${third.username}`} className="font-pixel text-[10px] text-white hover:text-lego-yellow transition-colors underline decoration-dotted">
@@ -97,13 +99,9 @@ export default function LeaderboardPage() {
               </div>
             )}
           </div>
-        ) : loading ? (
-          <div className="h-64 flex items-center justify-center">
-            <div className="font-pixel text-xl text-lego-yellow animate-pulse">BUILDING RANKINGS...</div>
-          </div>
         ) : null}
 
-        {/* List */}
+        {/* Leaders List */}
         <LegoCard variant="dark">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
@@ -116,32 +114,45 @@ export default function LeaderboardPage() {
                 </tr>
               </thead>
               <tbody className="font-retro text-xl">
-                {leaders.map((leader, i) => (
-                  <tr
-                    key={leader._id}
-                    className={`border-b-2 border-black/20 hover:bg-black/10 transition-colors ${leader._id === currentUser?._id ? 'bg-lego-blue/20 text-lego-yellow' : ''
+                {loading ? (
+                  [...Array(5)].map((_, i) => (
+                    <tr key={i} className="animate-pulse border-b-2 border-black/20">
+                      <td className="py-4 px-2"><div className="h-4 w-12 bg-white/5 rounded" /></td>
+                      <td className="py-4"><div className="h-4 w-32 bg-white/5 rounded" /></td>
+                      <td className="py-4"><div className="h-4 w-20 bg-white/5 rounded" /></td>
+                      <td className="py-4"><div className="h-4 w-12 bg-white/5 rounded" /></td>
+                    </tr>
+                  ))
+                ) : (
+                  leaders.map((leader, i) => (
+                    <tr
+                      key={leader._id}
+                      className={`border-b-2 border-black/20 hover:bg-black/10 transition-colors ${
+                        leader._id === currentUser?._id ? 'bg-lego-blue/20 text-lego-yellow' : ''
                       }`}
-                  >
-                    <td className="py-4 px-2 font-pixel text-xs">#{i + 1}</td>
-                    <td className="py-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 border-2 border-black rounded-brick ${i === 0 ? 'bg-lego-yellow' : i === 1 ? 'bg-gray-400' : i === 2 ? 'bg-lego-orange' : 'bg-lego-dark'
+                    >
+                      <td className="py-4 px-2 font-pixel text-xs">#{i + 1}</td>
+                      <td className="py-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 border-2 border-black rounded-brick ${
+                            i === 0 ? 'bg-lego-yellow' : i === 1 ? 'bg-gray-400' : i === 2 ? 'bg-lego-orange' : 'bg-lego-dark'
                           }`} />
-                        <Link href={`/profile/${leader.username}`} className="hover:text-lego-blue hover:underline transition-colors decoration-dotted">
-                          {leader.username}
-                        </Link>
-                        {leader._id === currentUser?._id && <span className="font-pixel text-[8px] ml-2 text-lego-green">(YOU)</span>}
-                      </div>
-                    </td>
-                    <td className="py-4">{leader.xp || 0}</td>
-                    <td className="py-4 font-pixel text-[10px] text-lego-yellow">{leader.completedChallenges}</td>
-                  </tr>
-                ))}
+                          <Link href={`/profile/${leader.username}`} className="hover:text-lego-blue hover:underline transition-colors decoration-dotted">
+                            {leader.username}
+                          </Link>
+                          {leader._id === currentUser?._id && <span className="font-pixel text-[8px] ml-2 text-lego-green">(YOU)</span>}
+                        </div>
+                      </td>
+                      <td className="py-4">{leader.xp || 0}</td>
+                      <td className="py-4 font-pixel text-[10px] text-lego-yellow">{leader.completedChallenges || 0}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
-            {leaders.length === 0 && !loading && (
-              <div className="text-center py-10 font-pixel text-[10px] text-gray-500">
-                NO BUILDERS IN THE HALL YET.
+            {!loading && leaders.length === 0 && (
+              <div className="text-center py-12 font-pixel text-[8px] text-gray-500 uppercase italic">
+                No legendary builders found yet...
               </div>
             )}
           </div>
@@ -150,4 +161,3 @@ export default function LeaderboardPage() {
     </div>
   );
 }
-

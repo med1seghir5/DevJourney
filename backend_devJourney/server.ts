@@ -2,14 +2,14 @@ import dotenv from 'dotenv';
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import connectDB from './config/db';
-
-dotenv.config();
-
 import helmet from 'helmet';
 import mongoSanitize from 'express-mongo-sanitize';
-import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
+import connectDB from './config/db';
+import logger from './utils/logger';
+import { ApiError } from './utils/ApiError';
+
+dotenv.config();
 
 const app = express();
 
@@ -22,7 +22,7 @@ app.use(cookieParser());
 // 3. NoSQL Injection Protection
 app.use(mongoSanitize());
 
-// 4. Global Rate Limiter: Max 100 requests per 15 mins
+// 4. Global Rate Limiter
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -58,7 +58,6 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 app.use(express.json());
-app.use(cookieParser());
 
 connectDB();
 
@@ -80,14 +79,17 @@ app.get('/', (req: Request, res: Response) => {
 
 // Global Error Handler
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  console.error('[ERROR]', err.stack);
-
-  const status = err.status || 500;
-  const message = process.env.NODE_ENV === 'production'
-    ? 'Something went wrong on our side. Internal Server Error.'
+  const statusCode = err instanceof ApiError ? err.statusCode : (err.status || 500);
+  const message = (process.env.NODE_ENV === 'production' && !(err instanceof ApiError))
+    ? 'Something went wrong on our side. Internal Server Error.' 
     : err.message;
 
-  res.status(status).json({
+  logger.error(`${req.method} ${req.url} - Status: ${statusCode} - Error: ${err.message}`, {
+    stack: err.stack,
+    userId: (req as any).user?._id
+  });
+
+  res.status(statusCode).json({
     success: false,
     message,
     stack: process.env.NODE_ENV === 'production' ? null : err.stack
@@ -96,5 +98,5 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server started on port ${PORT}`);
+    logger.info(`Server started on port ${PORT}`);
 });

@@ -15,26 +15,25 @@ const protect = async (req, res, next) => {
         token = req.cookies.auth_token;
     }
     if (!token) {
-        res.status(401).json({ message: 'Non autorisé, pas de token' });
+        res.status(401).json({ message: 'Not authorized, no token' });
         return;
     }
     try {
         const jwtSecret = process.env.JWT_SECRET;
-        if (!jwtSecret) {
-            throw new Error('La variable JWT_SECRET n\'est pas définie');
-        }
+        if (!jwtSecret)
+            throw new Error('JWT_SECRET is not defined');
         const decoded = jsonwebtoken_1.default.verify(token, jwtSecret);
         const currentUser = await User_1.default.findById(decoded.userId).select('-password');
         if (!currentUser) {
-            res.status(401).json({ message: 'L\'utilisateur rattaché à ce token n\'existe plus' });
+            res.status(401).json({ message: 'User belonging to this token no longer exists' });
             return;
         }
         req.user = currentUser;
         next();
     }
     catch (error) {
-        console.error('Erreur de vérification du token:', error);
-        res.status(401).json({ message: 'Non autorisé, token invalide' });
+        console.error('Token verification error:', error);
+        res.status(401).json({ message: 'Not authorized, invalid token' });
     }
 };
 exports.protect = protect;
@@ -43,7 +42,7 @@ const adminOnly = (req, res, next) => {
         next();
     }
     else {
-        res.status(403).json({ message: 'Accès refusé, vous devez être administrateur' });
+        res.status(403).json({ message: 'Access denied, admin role required' });
     }
 };
 exports.adminOnly = adminOnly;
@@ -52,7 +51,7 @@ const teacherOrAdminOnly = (req, res, next) => {
         next();
     }
     else {
-        res.status(403).json({ message: 'Accès refusé, droits de professeur requis' });
+        res.status(403).json({ message: 'Access denied, teacher or admin role required' });
     }
 };
 exports.teacherOrAdminOnly = teacherOrAdminOnly;

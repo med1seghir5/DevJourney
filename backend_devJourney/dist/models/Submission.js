@@ -39,11 +39,13 @@ const SubmissionSchema = new mongoose_1.Schema({
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
+        index: true,
     },
     challengeId: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'Challenge',
         required: true,
+        index: true,
     },
     githubRepoLink: {
         type: String,

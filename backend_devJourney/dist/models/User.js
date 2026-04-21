@@ -38,6 +38,8 @@ const UserSchema = new mongoose_1.Schema({
     username: {
         type: String,
         required: false,
+        unique: true,
+        index: true,
     },
     email: {
         type: String,
