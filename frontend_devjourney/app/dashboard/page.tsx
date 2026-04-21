@@ -8,7 +8,11 @@ import api from '@/lib/api';
 import LegoCard from '@/components/ui/LegoCard';
 import LegoButton from '@/components/ui/LegoButton';
 import LegoBadge from '@/components/ui/LegoBadge';
-import SubmissionsSection from '@/components/dashboard/SubmissionsSection';
+import dynamic from 'next/dynamic';
+const SubmissionsSection = dynamic(() => import('@/components/dashboard/SubmissionsSection'), {
+  loading: () => <div className="animate-pulse bg-lego-dark/50 h-64 rounded-brick" />,
+  ssr: false
+});
 
 export default function DashboardPage() {
   const { user, isAuthenticated, logout, checkAuth } = useAuthStore();

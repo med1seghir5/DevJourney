@@ -3,6 +3,7 @@ import Submission from '../models/Submission';
 import Challenge from '../models/Challenge';
 import User from '../models/User';
 import { XP_REWARDS, Difficulty } from '../config/constants';
+import { getCache, setCache, clearCache } from '../services/cacheService';
 
 export const submitChallenge = async (req: any, res: Response): Promise<void> => {
   try {
@@ -35,28 +36,68 @@ export const submitChallenge = async (req: any, res: Response): Promise<void> =>
   }
 };
 
+
+
 export const getMySubmissions = async (req: any, res: Response): Promise<void> => {
   try {
     const userId = req.user._id;
     const isTeacher = req.user.role === 'teacher' || req.user.role === 'admin';
+    
+    // Pagination parameters
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const skip = (page - 1) * limit;
 
     let submissions;
+    let total;
+
     if (isTeacher) {
+      // Check cache for teacher view (all submissions)
+      const cacheKey = `all_subs_p${page}_l${limit}`;
+      const cachedData = getCache(cacheKey);
+      
+      if (cachedData) {
+        res.status(200).json(cachedData);
+        return;
+      }
+
+      total = await Submission.countDocuments({});
       submissions = await Submission.find({})
         .populate('userId', 'username email')
-        .populate('challengeId', 'title difficulty')
-        .sort({ createdAt: -1 });
+        .populate('challengeId', 'title difficulty xpReward')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean();
+        
+      const responseData = {
+        success: true,
+        count: submissions.length,
+        total,
+        page,
+        pages: Math.ceil(total / limit),
+        data: submissions,
+      };
+
+      setCache(cacheKey, responseData, 60); // Cache for 1 minute
+      res.status(200).json(responseData);
     } else {
+      total = await Submission.countDocuments({ userId });
       submissions = await Submission.find({ userId })
         .populate('challengeId', 'title difficulty')
-        .sort({ createdAt: -1 });
-    }
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
 
-    res.status(200).json({
-      success: true,
-      count: submissions.length,
-      data: submissions,
-    });
+      res.status(200).json({
+        success: true,
+        count: submissions.length,
+        total,
+        page,
+        pages: Math.ceil(total / limit),
+        data: submissions,
+      });
+    }
   } catch (error) {
     console.error('getMySubmissions error:', error);
     res.status(500).json({ message: 'Internal server error' });
@@ -79,6 +120,8 @@ export const getPendingSubmissions = async (req: Request, res: Response): Promis
     res.status(500).json({ message: 'Failed to fetch pending submissions' });
   }
 };
+
+
 
 export const validateSubmission = async (req: any, res: Response): Promise<void> => {
   try {
@@ -111,6 +154,9 @@ export const validateSubmission = async (req: any, res: Response): Promise<void>
     submission.status = status;
     if (feedback) submission.feedback = feedback;
     await submission.save();
+
+    // Invalidate caches
+    clearCache();
 
     res.status(200).json({ success: true, message: 'Submission reviewed successfully', submission });
   } catch (error) {

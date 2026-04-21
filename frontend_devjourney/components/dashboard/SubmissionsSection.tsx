@@ -20,18 +20,21 @@ export default function SubmissionsSection() {
   const [submissions, setSubmissions] = React.useState<Submission[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [page, setPage] = React.useState(1);
+  const [totalPages, setTotalPages] = React.useState(1);
 
   React.useEffect(() => {
     fetchSubmissions();
-  }, []);
+  }, [page]);
 
   const fetchSubmissions = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get('/submissions');
+      const res = await api.get(`/submissions?page=${page}&limit=10`);
       if (res.data.success) {
         setSubmissions(res.data.data);
+        setTotalPages(res.data.pages || 1);
       } else {
         setError("FAILED TO FETCH SUBMISSIONS");
       }
@@ -67,7 +70,7 @@ export default function SubmissionsSection() {
         <div className="h-1 w-20 bg-lego-yellow/20" />
       </div>
 
-      <div className="overflow-x-auto bg-black/20 border-4 border-black p-4 rounded-brick">
+      <div className="max-h-[500px] overflow-y-auto overflow-x-auto bg-black/20 border-4 border-black p-4 rounded-brick custom-scrollbar">
         <table className="w-full text-left border-separate border-spacing-y-2">
           <thead>
             <tr className="font-pixel text-[8px] text-gray-500">
@@ -143,6 +146,28 @@ export default function SubmissionsSection() {
             )}
           </tbody>
         </table>
+
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-4 mt-6 pt-4 border-t border-white/5 font-pixel text-[8px]">
+            <button 
+              disabled={page === 1}
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              className="text-lego-blue disabled:text-gray-600 hover:scale-110 active:scale-95 transition-all uppercase"
+            >
+              ◄ PREVIOUS
+            </button>
+            <span className="text-white bg-lego-dark px-3 py-1 border-2 border-black rounded-sm">
+              PAGE {page} / {totalPages}
+            </span>
+            <button 
+              disabled={page === totalPages}
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              className="text-lego-blue disabled:text-gray-600 hover:scale-110 active:scale-95 transition-all uppercase"
+            >
+              NEXT ►
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

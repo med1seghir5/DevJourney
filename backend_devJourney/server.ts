@@ -6,7 +6,29 @@ import connectDB from './config/db';
 
 dotenv.config();
 
+import helmet from 'helmet';
+import mongoSanitize from 'express-mongo-sanitize';
+import cookieParser from 'cookie-parser';
+import rateLimit from 'express-rate-limit';
+
 const app = express();
+
+// 1. Security Headers (Helmet)
+app.use(helmet());
+
+// 2. Cookie Parsing (for HTTPOnly tokens)
+app.use(cookieParser());
+
+// 3. NoSQL Injection Protection
+app.use(mongoSanitize());
+
+// 4. Global Rate Limiter: Max 100 requests per 15 mins
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { message: 'Too many requests, please try again later.' }
+});
+app.use(globalLimiter);
 
 app.set('trust proxy', 1);
 
@@ -56,8 +78,23 @@ app.get('/', (req: Request, res: Response) => {
   res.send('DevJourney API is running');
 });
 
-const PORT = process.env.PORT || 5000;
+// Global Error Handler
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  console.error('[ERROR]', err.stack);
 
+  const status = err.status || 500;
+  const message = process.env.NODE_ENV === 'production'
+    ? 'Something went wrong on our side. Internal Server Error.'
+    : err.message;
+
+  res.status(status).json({
+    success: false,
+    message,
+    stack: process.env.NODE_ENV === 'production' ? null : err.stack
+  });
+});
+
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server started on port ${PORT}`);
 });

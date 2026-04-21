@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import Challenge from '../models/Challenge';
+import { getCache, setCache } from '../services/cacheService';
 
 export const createChallenge = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -32,21 +33,35 @@ export const createChallenge = async (req: Request, res: Response): Promise<void
 export const getChallenges = async (req: Request, res: Response): Promise<void> => {
   try {
     const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const startIndex = (page - 1) * limit;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const skip = (page - 1) * limit;
 
-    const total = await Challenge.countDocuments();
-    const challenges = await Challenge.find().skip(startIndex).limit(limit).sort({ createdAt: -1 });
+    const cacheKey = `challenges_p${page}_l${limit}`;
+    const cachedData = getCache(cacheKey);
+    if (cachedData) {
+      res.status(200).json(cachedData);
+      return;
+    }
 
-    res.status(200).json({
+    const total = await Challenge.countDocuments({});
+    const challenges = await Challenge.find({})
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const responseData = {
       success: true,
       count: challenges.length,
       total,
       page,
       pages: Math.ceil(total / limit),
       data: challenges,
-    });
-  } catch (error: any) {
+    };
+
+    setCache(cacheKey, responseData, 300); // 5 minutes cache
+    res.status(200).json(responseData);
+  } catch (error) {
     console.error('getChallenges error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
