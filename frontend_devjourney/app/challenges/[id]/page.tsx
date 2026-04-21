@@ -78,12 +78,12 @@ export default function ChallengeDetailPage() {
       <div className="max-w-5xl mx-auto space-y-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 animate-brick">
           <div>
-            <Link href="/challenges" className="font-pixel text-[8px] text-lego-blue hover:text-white mb-2 inline-block">
+            <Link href="/challenges" className="font-pixel text-[10px] text-lego-blue hover:text-white mb-2 inline-block">
               🔙 BACK TO MAP
             </Link>
-            <h1 className="font-pixel text-4xl text-white [text-shadow:4px_4px_0px_#E3000B]">{challenge.title.toUpperCase()}</h1>
+            <h1 className="font-pixel text-2xl md:text-4xl text-white [text-shadow:2px_2px_0px_#E3000B] md:[text-shadow:4px_4px_0px_#E3000B]">{challenge.title.toUpperCase()}</h1>
           </div>
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-4">
             <LegoBadge variant={challenge.difficulty as any}>{challenge.difficulty.toUpperCase()}</LegoBadge>
             <LegoBadge variant="status">50 XP</LegoBadge>
           </div>
@@ -93,9 +93,9 @@ export default function ChallengeDetailPage() {
           <div className="lg:col-span-2 space-y-8 animate-brick" style={{ animationDelay: '0.2s' }}>
             <LegoCard variant="white" className="border-b-[12px]">
               <h2 className="font-pixel text-sm mb-6 border-b-2 border-gray-100 pb-2">📜 INSTRUCTION BOOKLET</h2>
-              <div className="font-retro text-xl leading-relaxed space-y-4">
+              <div className="font-retro text-lg md:text-xl leading-relaxed space-y-4">
                 <p className="whitespace-pre-wrap">{challenge.description}</p>
-                <h3 className="font-pixel text-[10px] mt-6 text-lego-blue">MISSION PROTOCOL:</h3>
+                <h3 className="font-pixel text-xs mt-6 text-lego-blue">MISSION PROTOCOL:</h3>
                 <ul className="list-none space-y-2">
                   <li className="flex items-center gap-2"><span className="text-lego-green">🧱</span> BUILD THE PROJECT LOCALLY</li>
                   <li className="flex items-center gap-2"><span className="text-lego-green">🧱</span> PUSH TO GITHUB REPOSITORY</li>
@@ -112,13 +112,13 @@ export default function ChallengeDetailPage() {
                   <h2 className="font-pixel text-sm mb-6 uppercase">SUBMIT YOUR SOLUTION</h2>
                   <form onSubmit={handleSubmission} className="space-y-6">
                     <div className="space-y-2">
-                      <label className="font-pixel text-[8px] text-lego-yellow">GITHUB REPOSITORY URL</label>
+                      <label className="font-pixel text-[10px] text-lego-yellow">GITHUB REPOSITORY URL</label>
                       <input
                         type="url"
                         value={userSubmission ? userSubmission.githubRepoLink : githubUrl}
                         onChange={(e) => setGithubUrl(e.target.value)}
                         disabled={!!userSubmission}
-                        className={`w-full bg-black/40 border-4 border-black p-3 font-retro text-lg text-white outline-none transition-all ${userSubmission ? 'opacity-50 cursor-not-allowed border-lego-green' : 'focus:border-lego-blue'}`}
+                        className={`w-full bg-black/40 border-4 border-black p-3 font-retro text-base md:text-lg text-white outline-none transition-all ${userSubmission ? 'opacity-50 cursor-not-allowed border-lego-green' : 'focus:border-lego-blue'}`}
                         placeholder="HTTPS://GITHUB.COM/..."
                         required
                       />
