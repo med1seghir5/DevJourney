@@ -84,6 +84,3 @@ The UI is built using a custom "Lego Design System", utilizing:
 - **Pixel Typography**: Use of *Press Start 2P* and *VT323* Google Fonts.
 - **Vibrant Color Palette**: LEGO Blue, Yellow, Red, and Green.
 
-## 📜 License
-Built with ❤️ for the Developer Community.
-🧱 **Happy Building!**
