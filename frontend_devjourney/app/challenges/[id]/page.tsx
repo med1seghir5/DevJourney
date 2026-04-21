@@ -75,15 +75,15 @@ export default function ChallengeDetailPage() {
 
   return (
     <div className="min-h-screen bg-pixel-grass p-4 md:p-8">
-      <div className="max-w-5xl mx-auto space-y-8">
+      <div className="max-w-5xl mx-auto space-y-6 md:space-y-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 animate-brick">
           <div>
             <Link href="/challenges" className="font-pixel text-[10px] text-lego-blue hover:text-white mb-2 inline-block">
               🔙 BACK TO MAP
             </Link>
-            <h1 className="font-pixel text-2xl md:text-4xl text-white [text-shadow:2px_2px_0px_#E3000B] md:[text-shadow:4px_4px_0px_#E3000B]">{challenge.title.toUpperCase()}</h1>
+            <h1 className="font-pixel text-lg md:text-4xl text-white leading-tight break-words [text-shadow:2px_2px_0px_#E3000B] md:[text-shadow:4px_4px_0px_#E3000B]">{challenge.title.toUpperCase()}</h1>
           </div>
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-2 md:gap-4">
             <LegoBadge variant={challenge.difficulty as any}>{challenge.difficulty.toUpperCase()}</LegoBadge>
             <LegoBadge variant="status">50 XP</LegoBadge>
           </div>

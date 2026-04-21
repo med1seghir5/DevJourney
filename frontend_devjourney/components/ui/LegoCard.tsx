@@ -39,7 +39,8 @@ const LegoCard = ({
             <div 
               key={i} 
               className={cn(
-                "w-4 h-4 rounded-full border-2 transition-transform group-hover:-translate-y-1",
+                "w-3 h-3 md:w-4 md:h-4 rounded-full border-2 transition-transform group-hover:-translate-y-1",
+                i >= 3 && "hidden md:block", // Hide 3 studs on mobile
                 variant === 'white' 
                   ? 'bg-gray-100 border-gray-200' 
                   : variant === 'yellow'
@@ -52,7 +53,7 @@ const LegoCard = ({
       )}
       <div 
         className={cn(
-          "relative border-4 border-b-[10px] border-r-[10px] rounded-brick p-6 shadow-brick overflow-hidden",
+          "relative border-4 border-b-[10px] border-r-[10px] rounded-brick p-4 md:p-6 shadow-brick overflow-hidden",
           variants[variant],
           className
         )}
