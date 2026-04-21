@@ -2,17 +2,9 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function proxy(request: NextRequest) {
-  const token = request.cookies.get('auth_token')?.value;
-
-  const protectedRoutes = ['/dashboard', '/profile', '/challenges/create'];
-  const isProtectedRoute = protectedRoutes.some((route) =>
-    request.nextUrl.pathname.startsWith(route)
-  );
-
-  if (isProtectedRoute && !token) {
-    return NextResponse.redirect(new URL('/auth/login', request.url));
-  }
-
+  // Disabling server-side cookie checks because the auth_token cookie
+  // is not sent cross-domain (from render.com to localhost:3000)
+  // Protected routes are handled securely on the client-side via authStore.
   return NextResponse.next();
 }
 
