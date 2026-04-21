@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import Submission from '../models/Submission';
 import Challenge from '../models/Challenge';
 import User from '../models/User';
+import { XP_REWARDS, Difficulty } from '../config/constants';
 
 export const submitChallenge = async (req: any, res: Response): Promise<void> => {
   try {
@@ -79,16 +80,22 @@ export const validateSubmission = async (req: any, res: Response): Promise<void>
       return;
     }
 
-    const submission = await Submission.findById(submissionId);
+    const submission = await Submission.findById(submissionId).populate('challengeId');
     if (!submission) {
       res.status(404).json({ message: 'Submission not found' });
       return;
     }
 
     if (status === 'approved' && submission.status !== 'approved') {
-      await User.findByIdAndUpdate(submission.userId, { $inc: { completedChallenges: 1, xp: 50 } });
+      const challenge = submission.challengeId as any;
+      const xpAmount = XP_REWARDS[challenge?.difficulty as Difficulty] || XP_REWARDS.easy;
+
+      await User.findByIdAndUpdate(submission.userId, { $inc: { completedChallenges: 1, xp: xpAmount } });
     } else if (status === 'rejected' && submission.status === 'approved') {
-      await User.findByIdAndUpdate(submission.userId, { $inc: { completedChallenges: -1, xp: -50 } });
+      const challenge = submission.challengeId as any;
+      const xpAmount = XP_REWARDS[challenge?.difficulty as Difficulty] || XP_REWARDS.easy;
+
+      await User.findByIdAndUpdate(submission.userId, { $inc: { completedChallenges: -1, xp: -xpAmount } });
     }
 
     submission.status = status;

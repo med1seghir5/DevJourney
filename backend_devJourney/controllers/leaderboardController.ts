@@ -5,7 +5,7 @@ export const getLeaderboard = async (req: Request, res: Response): Promise<void>
   try {
     const leaderboard = await User.find({ isVerified: true })
       .select('username name avatar completedChallenges xp')
-      .sort({ completedChallenges: -1 })
+      .sort({ xp: -1, completedChallenges: -1 })
       .limit(100);
 
     res.status(200).json({ success: true, data: leaderboard });

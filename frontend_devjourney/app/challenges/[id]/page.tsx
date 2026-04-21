@@ -10,6 +10,7 @@ import LegoInput from '@/components/ui/LegoInput';
 import ProgressBar from '@/components/ui/ProgressBar';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
+import { XP_REWARDS, Difficulty } from '@/lib/constants';
 
 export default function ChallengeDetailPage() {
   const { id } = useParams();
@@ -85,7 +86,9 @@ export default function ChallengeDetailPage() {
           </div>
           <div className="flex flex-wrap gap-2 md:gap-4">
             <LegoBadge variant={challenge.difficulty as any}>{challenge.difficulty.toUpperCase()}</LegoBadge>
-            <LegoBadge variant="status">50 XP</LegoBadge>
+            <LegoBadge variant="status">
+              {XP_REWARDS[challenge.difficulty as Difficulty] || 50} XP
+            </LegoBadge>
           </div>
         </div>
 
@@ -126,7 +129,9 @@ export default function ChallengeDetailPage() {
 
                     {userSubmission && (
                       <div className={`p-3 font-pixel text-[8px] border-2 ${userSubmission.status === 'approved' ? 'bg-lego-green/20 border-lego-green text-lego-green' : 'bg-lego-yellow/20 border-lego-yellow text-lego-yellow'}`}>
-                        {userSubmission.status === 'approved' ? 'MISSION COMPLETE ✅ (+50 XP)' : 'UNDER REVIEW BY TEACHER ⏳'}
+                        {userSubmission.status === 'approved' 
+                          ? `MISSION COMPLETE ✅ (+${XP_REWARDS[challenge.difficulty as Difficulty] || 50} XP)` 
+                          : 'UNDER REVIEW BY TEACHER ⏳'}
                       </div>
                     )}
 

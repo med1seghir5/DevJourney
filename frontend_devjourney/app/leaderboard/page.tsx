@@ -124,7 +124,7 @@ export default function LeaderboardPage() {
                         {leader._id === currentUser?._id && <span className="font-pixel text-[8px] ml-2 text-lego-green">(YOU)</span>}
                       </div>
                     </td>
-                    <td className="py-4">{leader.completedChallenges * 100 + 50}</td>
+                    <td className="py-4">{leader.xp || 0}</td>
                     <td className="py-4 font-pixel text-[10px] text-lego-yellow">{leader.completedChallenges}</td>
                   </tr>
                 ))}

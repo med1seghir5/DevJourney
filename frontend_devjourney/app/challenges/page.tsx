@@ -8,6 +8,7 @@ import Link from 'next/link';
 
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
+import { XP_REWARDS, Difficulty } from '@/lib/constants';
 
 export default function ChallengesPage() {
   const [filter, setFilter] = useState('ALL');
@@ -33,7 +34,7 @@ export default function ChallengesPage() {
     }
   };
 
-  const calculateXP = (_diff: string) => 50;
+  const calculateXP = (diff: string) => XP_REWARDS[diff.toLowerCase() as Difficulty] || 50;
 
   const filtered = challenges.filter(c => filter === 'ALL' || c.difficulty.toUpperCase() === filter);
 
