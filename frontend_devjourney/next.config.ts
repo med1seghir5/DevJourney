@@ -2,10 +2,11 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   async rewrites() {
+    const backendUrl = 'https://devjourneybackend-hn16.onrender.com';
     return [
       {
         source: '/api/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL || 'https://devjourneybackend-hn16.onrender.com/api'}/:path*`,
+        destination: `${backendUrl}/api/:path*`,
       },
     ];
   },
