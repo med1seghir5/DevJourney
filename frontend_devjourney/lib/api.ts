@@ -33,9 +33,8 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch {
         _isRefreshing = false;
-        if (!isAuthRoute && typeof window !== 'undefined') {
-          window.location.href = '/auth/login';
-        }
+        // Logic removed: don't force redirect here. 
+        // Protected pages handle redirection via proxy.ts or their own logic.
       }
     }
     return Promise.reject(error);
