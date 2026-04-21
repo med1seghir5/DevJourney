@@ -54,8 +54,10 @@ export default function RegisterPage() {
         router.push('/dashboard');
       }
     } catch (error: any) {
-      const errorMsg = error.response?.data?.message || 'Registration failed';
-      alert(`Error: ${errorMsg}`);
+      console.error("Register detail:", error);
+      const errorMsg = error.response?.data?.message || error.message || 'Registration failed';
+      const status = error.response?.status;
+      alert(`Register Error [${status || 'Network'}]: ${errorMsg}`);
     }
   };
 

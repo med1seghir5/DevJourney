@@ -44,8 +44,10 @@ export default function LoginPage() {
         router.push('/dashboard');
       }
     } catch (error: any) {
-      const errorMsg = error.response?.data?.message || 'Login failed';
-      alert(`Error: ${errorMsg}`);
+      console.error("Login detail:", error);
+      const errorMsg = error.response?.data?.message || error.message || 'Login failed';
+      const status = error.response?.status;
+      alert(`Login Error [${status || 'Network'}]: ${errorMsg}`);
     }
   };
 

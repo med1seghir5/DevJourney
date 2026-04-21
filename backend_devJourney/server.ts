@@ -29,7 +29,7 @@ app.use(cors({
 }));
 
 app.use((req: Request, res: Response, next: NextFunction) => {
-  console.log(`[${new Date().toLocaleTimeString()}] ${req.method} ${req.url}`);
+  console.log(`[${new Date().toLocaleTimeString()}] ${req.method} ${req.url} - Origin: ${req.headers.origin}`);
   next();
 });
 
