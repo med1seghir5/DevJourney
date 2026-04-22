@@ -17,7 +17,7 @@ const retroFont = VT323({
 
 export const metadata: Metadata = {
   title: "DevJourney",
-  description: "A gamified developer challenge platform styled with LEGO and Minecraft aesthetics.",
+  description: "Welcome to DevJourney, a platform where developers learn, practice, and grow through coding challenges. Complete missions, earn XP, and track your progress as you improve your skills.",
   icons: {
     icon: "/logo.png",
     apple: "/logo.png",

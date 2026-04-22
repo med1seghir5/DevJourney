@@ -1,6 +1,6 @@
 # 🧱 DevJourney - Frontend
 
-![DevJourney Logo](./public/logo.png)
+![DevJourney Logo](./public/readmeFile.png)
 
 DevJourney is an interactive, gamified platform designed for developers to master coding skills, complete real-world missions, and climb the global leaderboard. Modeled with a nostalgic 8-bit, LEGO, and Minecraft-inspired aesthetic, learning to code has never been more fun!
 
