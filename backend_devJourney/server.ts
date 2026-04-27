@@ -29,7 +29,12 @@ app.use(mongoSanitize());
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
-  message: { message: 'Too many requests, please try again later.' }
+  message: { message: 'Too many requests, please try again later.' },
+  keyGenerator: (req) => {
+    return req.ip || req.socket.remoteAddress || 'unknown';
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 app.use(globalLimiter);
 
