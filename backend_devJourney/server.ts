@@ -13,24 +13,25 @@ dotenv.config();
 
 const app = express();
 
-// 1. Security Headers (Helmet)
+// 1. Trust Proxy (MUST be set before rate limiters)
+app.set('trust proxy', 1);
+
+// 2. Security Headers (Helmet)
 app.use(helmet());
 
-// 2. Cookie Parsing (for HTTPOnly tokens)
+// 3. Cookie Parsing (for HTTPOnly tokens)
 app.use(cookieParser());
 
-// 3. NoSQL Injection Protection
+// 4. NoSQL Injection Protection
 app.use(mongoSanitize());
 
-// 4. Global Rate Limiter
+// 5. Global Rate Limiter
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
   message: { message: 'Too many requests, please try again later.' }
 });
 app.use(globalLimiter);
-
-app.set('trust proxy', 1);
 
 const allowedOrigins = [
   'http://localhost:3000',
