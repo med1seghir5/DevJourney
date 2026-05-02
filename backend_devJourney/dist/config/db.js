@@ -13,12 +13,10 @@ const connectDB = async () => {
         if (!dbUrl) {
             throw new Error('DATABASE_URL is not defined in .env');
         }
-        // Options pour stabiliser la connexion, notamment sur Windows/Render
         const options = {
-            // Si vous avez toujours l'erreur "certificate validation failed" sur votre machine locale
-            // ces options permettent de passer outre les problèmes de certificats système
             tls: true,
-            // tlsAllowInvalidCertificates: true, // Décommentez cette ligne si la connexion échoue encore
+            tlsAllowInvalidCertificates: true, // Force la connexion malgré les erreurs de certificat système
+            connectTimeoutMS: 10000,
         };
         const conn = await mongoose_1.default.connect(dbUrl, options);
         console.log(`✅ MongoDB Connecté : ${conn.connection.host}`);

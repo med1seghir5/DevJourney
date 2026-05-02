@@ -5,6 +5,9 @@ import User from '../models/User';
 import { XP_REWARDS, Difficulty } from '../config/constants';
 import { getCache, setCache, clearCache } from '../services/cacheService';
 
+/**
+ * Soumettre une solution à un challenge
+ */
 export const submitChallenge = async (req: any, res: Response): Promise<void> => {
   try {
     const { challengeId, githubRepoLink } = req.body;
@@ -36,76 +39,73 @@ export const submitChallenge = async (req: any, res: Response): Promise<void> =>
   }
 };
 
-
-
+/**
+ * Récupérer mes propres soumissions (Etudiant) 
+ * OU les soumissions liées à mes challenges (Enseignant)
+ */
 export const getMySubmissions = async (req: any, res: Response): Promise<void> => {
   try {
     const userId = req.user._id;
-    const isTeacher = req.user.role === 'teacher' || req.user.role === 'admin';
+    const userRole = req.user.role;
     
-    // Pagination parameters
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
     const skip = (page - 1) * limit;
 
-    let submissions;
-    let total;
+    let query: any = {};
 
-    if (isTeacher) {
-      // Check cache for teacher view (all submissions)
-      const cacheKey = `all_subs_p${page}_l${limit}`;
-      const cachedData = getCache(cacheKey);
-      
-      if (cachedData) {
-        res.status(200).json(cachedData);
-        return;
-      }
-
-      total = await Submission.countDocuments({});
-      submissions = await Submission.find({})
-        .populate('userId', 'username email')
-        .populate('challengeId', 'title difficulty xpReward')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit);
-        
-      const responseData = {
-        success: true,
-        count: submissions.length,
-        total,
-        page,
-        pages: Math.ceil(total / limit),
-        data: submissions,
-      };
-
-      setCache(cacheKey, responseData, 60); // Cache for 1 minute
-      res.status(200).json(responseData);
+    if (userRole === 'teacher') {
+      // Un enseignant ne voit que les soumissions de SES challenges
+      const myChallenges = await Challenge.find({ teacherId: userId }).select('_id');
+      const challengeIds = myChallenges.map(c => c._id);
+      query = { challengeId: { $in: challengeIds } };
+    } else if (userRole === 'admin') {
+      // L'admin voit tout
+      query = {};
     } else {
-      total = await Submission.countDocuments({ userId });
-      submissions = await Submission.find({ userId })
-        .populate('challengeId', 'title difficulty')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit);
-
-      res.status(200).json({
-        success: true,
-        count: submissions.length,
-        total,
-        page,
-        pages: Math.ceil(total / limit),
-        data: submissions,
-      });
+      // L'étudiant ne voit que SES propres soumissions
+      query = { userId };
     }
+
+    const total = await Submission.countDocuments(query);
+    const submissions = await Submission.find(query)
+      .populate('userId', 'username email')
+      .populate('challengeId', 'title difficulty')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    res.status(200).json({
+      success: true,
+      count: submissions.length,
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      data: submissions,
+    });
   } catch (error) {
     console.error('getMySubmissions error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
 
-export const getPendingSubmissions = async (req: Request, res: Response): Promise<void> => {
+/**
+ * Récupérer les soumissions en attente (Filtré par enseignant)
+ */
+export const getPendingSubmissions = async (req: any, res: Response): Promise<void> => {
   try {
-    const submissions = await Submission.find({ status: 'pending' })
+    const userId = req.user._id;
+    const userRole = req.user.role;
+
+    let query: any = { status: 'pending' };
+
+    if (userRole === 'teacher') {
+      const myChallenges = await Challenge.find({ teacherId: userId }).select('_id');
+      const challengeIds = myChallenges.map(c => c._id);
+      query.challengeId = { $in: challengeIds };
+    }
+
+    const submissions = await Submission.find(query)
       .populate('userId', 'username email')
       .populate('challengeId', 'title')
       .sort({ createdAt: 1 });
@@ -120,15 +120,18 @@ export const getPendingSubmissions = async (req: Request, res: Response): Promis
   }
 };
 
-
-
+/**
+ * Valider ou rejeter une soumission
+ */
 export const validateSubmission = async (req: any, res: Response): Promise<void> => {
   try {
     const { submissionId } = req.params;
     const { status, feedback } = req.body;
+    const userId = req.user._id;
+    const userRole = req.user.role;
 
     if (!['approved', 'rejected'].includes(status)) {
-      res.status(400).json({ message: 'Invalid status (must be "approved" or "rejected")' });
+      res.status(400).json({ message: 'Invalid status' });
       return;
     }
 
@@ -138,25 +141,26 @@ export const validateSubmission = async (req: any, res: Response): Promise<void>
       return;
     }
 
+    // Vérifier que l'enseignant est bien le créateur du challenge (Sécurité)
+    if (userRole === 'teacher') {
+      const challenge = submission.challengeId as any;
+      if (challenge.teacherId.toString() !== userId.toString()) {
+        res.status(403).json({ message: 'Not authorized to review this submission' });
+        return;
+      }
+    }
+
     if (status === 'approved' && submission.status !== 'approved') {
       const challenge = submission.challengeId as any;
       const xpAmount = XP_REWARDS[challenge?.difficulty as Difficulty] || XP_REWARDS.easy;
-
       await User.findByIdAndUpdate(submission.userId, { $inc: { completedChallenges: 1, xp: xpAmount } });
-    } else if (status === 'rejected' && submission.status === 'approved') {
-      const challenge = submission.challengeId as any;
-      const xpAmount = XP_REWARDS[challenge?.difficulty as Difficulty] || XP_REWARDS.easy;
-
-      await User.findByIdAndUpdate(submission.userId, { $inc: { completedChallenges: -1, xp: -xpAmount } });
     }
 
     submission.status = status;
     if (feedback) submission.feedback = feedback;
     await submission.save();
 
-    // Invalidate caches
     clearCache();
-
     res.status(200).json({ success: true, message: 'Submission reviewed successfully', submission });
   } catch (error) {
     console.error('validateSubmission error:', error);
@@ -164,14 +168,26 @@ export const validateSubmission = async (req: any, res: Response): Promise<void>
   }
 };
 
-export const getAllSubmissions = async (req: Request, res: Response): Promise<void> => {
+/**
+ * Récupérer toutes les soumissions (Filtré par enseignant)
+ */
+export const getAllSubmissions = async (req: any, res: Response): Promise<void> => {
   try {
-    const submissions = await Submission.find({})
+    const userId = req.user._id;
+    const userRole = req.user.role;
+
+    let query: any = {};
+
+    if (userRole === 'teacher') {
+      const myChallenges = await Challenge.find({ teacherId: userId }).select('_id');
+      const challengeIds = myChallenges.map(c => c._id);
+      query = { challengeId: { $in: challengeIds } };
+    }
+
+    const submissions = await Submission.find(query)
       .populate('userId', 'username email')
       .populate('challengeId', 'title difficulty')
       .sort({ createdAt: -1 });
-
-    console.log(`[DEBUG] getAllSubmissions: Found ${submissions.length} total submissions in database.`);
     
     res.status(200).json({
       success: true,
@@ -179,7 +195,6 @@ export const getAllSubmissions = async (req: Request, res: Response): Promise<vo
       data: submissions,
     });
   } catch (error) {
-    console.error('getAllSubmissions error:', error);
     res.status(500).json({ message: 'Failed to fetch all submissions' });
   }
 };
@@ -204,7 +219,6 @@ export const getUserSubmissionsByUsername = async (req: Request, res: Response):
       data: submissions,
     });
   } catch (error) {
-    console.error('getUserSubmissionsByUsername error:', error);
     res.status(500).json({ message: 'Failed to fetch user submissions' });
   }
 };

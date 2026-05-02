@@ -22,7 +22,7 @@ const connectDB = async (): Promise<void> => {
     console.log(`✅ MongoDB Connecté : ${conn.connection.host}`);
   } catch (error: any) {
     console.error(`❌ Erreur de connexion MongoDB : ${error.message}`);
-    
+
     // Tentative de reconnexion automatique ou sortie propre
     console.log('Tentative de reconnexion dans 5 secondes...');
     setTimeout(connectDB, 5000);

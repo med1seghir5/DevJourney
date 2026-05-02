@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import Challenge from '../models/Challenge';
 import { getCache, setCache } from '../services/cacheService';
 
-export const createChallenge = async (req: Request, res: Response): Promise<void> => {
+export const createChallenge = async (req: any, res: Response): Promise<void> => {
   try {
     const { title, description, difficulty } = req.body;
 
@@ -21,6 +21,7 @@ export const createChallenge = async (req: Request, res: Response): Promise<void
       title,
       description,
       difficulty: difficulty || 'medium',
+      teacherId: req.user._id, // Assign current teacher ID
     });
 
     res.status(201).json({ message: 'Challenge created successfully', challenge });
@@ -45,6 +46,7 @@ export const getChallenges = async (req: Request, res: Response): Promise<void> 
 
     const total = await Challenge.countDocuments({});
     const challenges = await Challenge.find({})
+      .populate('teacherId', 'username email') // Optionnel: voir qui a créé
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -68,7 +70,7 @@ export const getChallenges = async (req: Request, res: Response): Promise<void> 
 
 export const getChallengeById = async (req: Request, res: Response): Promise<void> => {
   try {
-    const challenge = await Challenge.findById(req.params.id);
+    const challenge = await Challenge.findById(req.params.id).populate('teacherId', 'username');
     if (!challenge) {
       res.status(404).json({ message: 'Challenge not found' });
       return;
