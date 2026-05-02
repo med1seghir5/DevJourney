@@ -28,7 +28,12 @@ app.use((0, hpp_1.default)());
 // 5. Cookie Parsing (pour les tokens HTTPOnly)
 app.use((0, cookie_parser_1.default)());
 // 6. Configuration du Proxy (Indispensable pour Render/Heroku pour le Rate Limiting)
-app.set('trust proxy', process.env.NODE_ENV === 'production' ? 1 : false);
+if (process.env.NODE_ENV === 'production') {
+    app.set('trust proxy', 1);
+}
+else {
+    app.set('trust proxy', false);
+}
 // 7. Rate Limiting Global (Protection générale)
 const globalLimiter = (0, express_rate_limit_1.default)({
     windowMs: 15 * 60 * 1000,
@@ -44,11 +49,11 @@ const allowedOrigins = [
     'http://localhost:3001',
     'https://devjourney-gdg.vercel.app',
     'https://devjourney-gray.vercel.app',
+    'https://devjourney.gdgbatna.com',
     process.env.FRONTEND_URL
 ].filter(Boolean);
 app.use((0, cors_1.default)({
     origin: (origin, callback) => {
-        // Autoriser les requêtes sans origine (comme les outils de test ou mobiles) si nécessaire
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         }
@@ -87,11 +92,9 @@ app.get('/', (req, res) => {
 // Gestion globale des erreurs
 app.use((err, req, res, next) => {
     const statusCode = err instanceof ApiError_1.ApiError ? err.statusCode : (err.status || 500);
-    // En production, on cache les détails techniques des erreurs non-ApiError
     const message = (process.env.NODE_ENV === 'production' && !(err instanceof ApiError_1.ApiError))
         ? 'Une erreur interne est survenue.'
         : err.message;
-    // Logging sélectif (on évite de logger les erreurs JWT répétitives en niveau Error)
     if (err.name !== 'TokenExpiredError' && err.name !== 'JsonWebTokenError') {
         logger_1.default.error(`${req.method} ${req.url} - Status: ${statusCode} - Error: ${err.message}`, {
             stack: err.stack,

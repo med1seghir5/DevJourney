@@ -49,13 +49,6 @@ export const registerLimiter = rateLimit({
 export const submissionLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 heure
   max: 10,
-  keyGenerator: (req: Request) => {
-    const user = (req as any).user;
-    if (user && user._id) {
-      return `user:${user._id}`;
-    }
-    return req.ip || 'unknown';
-  },
   message: { 
     success: false, 
     message: 'Limite de soumissions atteinte. Veuillez réessayer dans une heure.' 

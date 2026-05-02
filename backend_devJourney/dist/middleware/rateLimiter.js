@@ -8,7 +8,6 @@ const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const express_slow_down_1 = __importDefault(require("express-slow-down"));
 /**
  * Ralentissement progressif des requêtes (Speed Limiting)
- * Ajoute un délai aux requêtes répétées pour décourager les bots
  */
 exports.speedLimiter = (0, express_slow_down_1.default)({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -17,7 +16,6 @@ exports.speedLimiter = (0, express_slow_down_1.default)({
 });
 /**
  * Protection contre le Brute Force sur le Login
- * Limite à 5 tentatives toutes les 15 minutes
  */
 exports.loginLimiter = (0, express_rate_limit_1.default)({
     windowMs: 15 * 60 * 1000,
@@ -35,7 +33,6 @@ exports.loginLimiter = (0, express_rate_limit_1.default)({
 });
 /**
  * Protection contre le spam d'inscription
- * Limite à 3 créations de compte par heure par IP
  */
 exports.registerLimiter = (0, express_rate_limit_1.default)({
     windowMs: 60 * 60 * 1000, // 1 heure
@@ -49,7 +46,6 @@ exports.registerLimiter = (0, express_rate_limit_1.default)({
 });
 /**
  * Protection contre le spam de soumissions
- * Limite à 10 soumissions par heure
  */
 exports.submissionLimiter = (0, express_rate_limit_1.default)({
     windowMs: 60 * 60 * 1000, // 1 heure
@@ -61,5 +57,5 @@ exports.submissionLimiter = (0, express_rate_limit_1.default)({
     standardHeaders: true,
     legacyHeaders: false,
 });
-// Ancien limiter pour compatibilité si nécessaire
+// Compatibilité avec l'ancien nom de variable si nécessaire
 exports.submissionRateLimiter = exports.submissionLimiter;

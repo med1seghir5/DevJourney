@@ -42,9 +42,6 @@ const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
   message: { success: false, message: 'Trop de requêtes, veuillez réessayer plus tard.' },
-  keyGenerator: (req) => {
-    return req.ip || 'unknown';
-  },
   standardHeaders: true,
   legacyHeaders: false,
 });
