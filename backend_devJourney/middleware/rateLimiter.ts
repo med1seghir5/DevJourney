@@ -1,9 +1,9 @@
 import rateLimit from 'express-rate-limit';
 import slowDown from 'express-slow-down';
+import { Request } from 'express';
 
 /**
  * Ralentissement progressif des requêtes (Speed Limiting)
- * Ajoute un délai aux requêtes répétées pour décourager les bots
  */
 export const speedLimiter = slowDown({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -13,7 +13,6 @@ export const speedLimiter = slowDown({
 
 /**
  * Protection contre le Brute Force sur le Login
- * Limite à 5 tentatives toutes les 15 minutes
  */
 export const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -32,7 +31,6 @@ export const loginLimiter = rateLimit({
 
 /**
  * Protection contre le spam d'inscription
- * Limite à 3 créations de compte par heure par IP
  */
 export const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 heure
@@ -47,11 +45,17 @@ export const registerLimiter = rateLimit({
 
 /**
  * Protection contre le spam de soumissions
- * Limite à 10 soumissions par heure
  */
 export const submissionLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 heure
   max: 10,
+  keyGenerator: (req: Request) => {
+    const user = (req as any).user;
+    if (user && user._id) {
+      return `user:${user._id}`;
+    }
+    return req.ip || 'unknown';
+  },
   message: { 
     success: false, 
     message: 'Limite de soumissions atteinte. Veuillez réessayer dans une heure.' 
@@ -60,5 +64,5 @@ export const submissionLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Ancien limiter pour compatibilité si nécessaire
+// Compatibilité avec l'ancien nom de variable si nécessaire
 export const submissionRateLimiter = submissionLimiter;
