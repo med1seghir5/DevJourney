@@ -60,8 +60,7 @@ const getMySubmissions = async (req, res) => {
                 .populate('challengeId', 'title difficulty xpReward')
                 .sort({ createdAt: -1 })
                 .skip(skip)
-                .limit(limit)
-                .lean();
+                .limit(limit);
             const responseData = {
                 success: true,
                 count: submissions.length,

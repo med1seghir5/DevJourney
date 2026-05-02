@@ -25,7 +25,7 @@ exports.registerSchema = joi_1.default.object({
     password: joi_1.default.string().min(6).required(),
 });
 exports.loginSchema = joi_1.default.object({
-    email: joi_1.default.string().email().required(),
+    identifier: joi_1.default.string().required(),
     password: joi_1.default.string().required(),
 });
 exports.submissionSchema = joi_1.default.object({

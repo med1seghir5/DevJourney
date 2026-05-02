@@ -46,8 +46,7 @@ const getChallenges = async (req, res) => {
         const challenges = await Challenge_1.default.find({})
             .sort({ createdAt: -1 })
             .skip(skip)
-            .limit(limit)
-            .lean();
+            .limit(limit);
         const responseData = {
             success: true,
             count: challenges.length,

@@ -1,1 +1,5 @@
 {"level":"info","message":"Server started on port 5000","service":"devjourney-backend","timestamp":"2026-04-21T22:31:33.659Z"}
+{"level":"info","message":"Server started on port 5000","service":"devjourney-backend","timestamp":"2026-05-02T11:22:54.408Z"}
+{"level":"info","message":"Serveur démarré en mode development sur le port 5000","service":"devjourney-backend","timestamp":"2026-05-02T11:23:50.800Z"}
+{"level":"info","message":"Serveur démarré en mode development sur le port 5000","service":"devjourney-backend","timestamp":"2026-05-02T11:31:17.536Z"}
+{"level":"info","message":"Serveur démarré en mode development sur le port 5000","service":"devjourney-backend","timestamp":"2026-05-02T11:32:54.836Z"}

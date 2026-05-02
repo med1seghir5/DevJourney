@@ -39,7 +39,10 @@ export default function RegisterPage() {
     resolver: zodResolver(registerSchema),
   });
 
+  const [serverError, setServerError] = React.useState<string | null>(null);
+
   const onSubmit = async (data: RegisterForm) => {
+    setServerError(null);
     try {
       const response = await api.post('/auth/register', {
         username: data.username,
@@ -55,8 +58,7 @@ export default function RegisterPage() {
     } catch (error: any) {
       console.error("Register detail:", error);
       const errorMsg = error.response?.data?.message || error.message || 'Registration failed';
-      const status = error.response?.status;
-      alert(`Register Error [${status || 'Network'}]: ${errorMsg}`);
+      setServerError(errorMsg);
     }
   };
 
@@ -96,6 +98,13 @@ export default function RegisterPage() {
               {...register('confirmPassword')}
               error={errors.confirmPassword?.message}
             />
+            {serverError && (
+              <div className="bg-lego-red/20 border-2 border-lego-red p-3 mb-4 animate-pulse">
+                <p className="font-pixel text-[10px] text-lego-red text-center">
+                  ⚠️ {serverError.toUpperCase()}
+                </p>
+              </div>
+            )}
             <div className="pt-4">
               <LegoButton variant="green" className="w-full" type="submit">
                 CREATE ACCOUNT 🧱

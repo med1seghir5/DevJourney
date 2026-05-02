@@ -6,9 +6,13 @@ export interface AuthRequest extends Request {
   user?: any;
 }
 
+/**
+ * Middleware de protection des routes (Authentification JWT)
+ */
 export const protect = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   let token;
 
+  // Extraction du token (Header Bearer ou Cookie)
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1];
   } else if (req.cookies && req.cookies.auth_token) {
@@ -16,7 +20,7 @@ export const protect = async (req: AuthRequest, res: Response, next: NextFunctio
   }
 
   if (!token) {
-    res.status(401).json({ message: 'Not authorized, no token' });
+    res.status(401).json({ success: false, message: 'Non autorisé : Token manquant' });
     return;
   }
 
@@ -28,30 +32,44 @@ export const protect = async (req: AuthRequest, res: Response, next: NextFunctio
     const currentUser = await User.findById(decoded.userId).select('-password');
 
     if (!currentUser) {
-      res.status(401).json({ message: 'User belonging to this token no longer exists' });
+      res.status(401).json({ success: false, message: 'L\'utilisateur lié à ce token n\'existe plus' });
       return;
     }
 
     req.user = currentUser;
     next();
-  } catch (error) {
-    console.error('Token verification error:', error);
-    res.status(401).json({ message: 'Not authorized, invalid token' });
+  } catch (error: any) {
+    // Gestion propre des erreurs JWT
+    let message = 'Session invalide ou expirée';
+    
+    if (error.name === 'TokenExpiredError') {
+      message = 'Votre session a expiré. Veuillez vous reconnecter.';
+    } else if (error.name === 'JsonWebTokenError') {
+      message = 'Token invalide ou corrompu.';
+    }
+
+    res.status(401).json({ success: false, message });
   }
 };
 
+/**
+ * Middleware pour restreindre l'accès aux administrateurs
+ */
 export const adminOnly = (req: AuthRequest, res: Response, next: NextFunction): void => {
   if (req.user && req.user.role === 'admin') {
     next();
   } else {
-    res.status(403).json({ message: 'Access denied, admin role required' });
+    res.status(403).json({ success: false, message: 'Accès refusé : Droits administrateur requis' });
   }
 };
 
+/**
+ * Middleware pour restreindre l'accès aux enseignants ou administrateurs
+ */
 export const teacherOrAdminOnly = (req: AuthRequest, res: Response, next: NextFunction): void => {
   if (req.user && (req.user.role === 'admin' || req.user.role === 'teacher')) {
     next();
   } else {
-    res.status(403).json({ message: 'Access denied, teacher or admin role required' });
+    res.status(403).json({ success: false, message: 'Accès refusé : Droits enseignant ou administrateur requis' });
   }
 };

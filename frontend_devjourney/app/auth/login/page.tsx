@@ -34,7 +34,10 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
+  const [serverError, setServerError] = React.useState<string | null>(null);
+
   const onSubmit = async (data: LoginForm) => {
+    setServerError(null);
     try {
       const response = await api.post('/auth/login', {
         identifier: data.identifier,
@@ -48,8 +51,7 @@ export default function LoginPage() {
     } catch (error: any) {
       console.error("Login detail:", error);
       const errorMsg = error.response?.data?.message || error.message || 'Login failed';
-      const status = error.response?.status;
-      alert(`Login Error [${status || 'Network'}]: ${errorMsg}`);
+      setServerError(errorMsg);
     }
   };
 
@@ -76,6 +78,13 @@ export default function LoginPage() {
               {...register('password')}
               error={errors.password?.message}
             />
+            {serverError && (
+              <div className="bg-lego-red/20 border-2 border-lego-red p-3 mb-4 animate-pulse">
+                <p className="font-pixel text-[10px] text-lego-red text-center">
+                  ⚠️ {serverError.toUpperCase()}
+                </p>
+              </div>
+            )}
             <div className="pt-4">
               <LegoButton variant="blue" className="w-full !text-lego-green" type="submit">
                 LOGIN 🧱

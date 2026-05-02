@@ -139,7 +139,7 @@ const login = async (req, res) => {
                 { email: identifier },
                 { username: identifier }
             ]
-        }).lean();
+        });
         console.log(`User found: ${!!user}`);
         if (!user || !user.password) {
             res.status(401).json({ message: 'Invalid credentials' });
