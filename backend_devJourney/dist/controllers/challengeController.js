@@ -22,6 +22,7 @@ const createChallenge = async (req, res) => {
             title,
             description,
             difficulty: difficulty || 'medium',
+            teacherId: req.user._id, // Assign current teacher ID
         });
         res.status(201).json({ message: 'Challenge created successfully', challenge });
     }
@@ -44,6 +45,7 @@ const getChallenges = async (req, res) => {
         }
         const total = await Challenge_1.default.countDocuments({});
         const challenges = await Challenge_1.default.find({})
+            .populate('teacherId', 'username email') // Optionnel: voir qui a créé
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);
@@ -66,7 +68,7 @@ const getChallenges = async (req, res) => {
 exports.getChallenges = getChallenges;
 const getChallengeById = async (req, res) => {
     try {
-        const challenge = await Challenge_1.default.findById(req.params.id);
+        const challenge = await Challenge_1.default.findById(req.params.id).populate('teacherId', 'username');
         if (!challenge) {
             res.status(404).json({ message: 'Challenge not found' });
             return;

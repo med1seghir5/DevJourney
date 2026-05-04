@@ -14,12 +14,11 @@ router.get('/', protect, getMySubmissions);
 router.get('/all', protect, teacherOrAdminOnly, getAllSubmissions);
 router.get('/pending', protect, teacherOrAdminOnly, getPendingSubmissions);
 
-// Protection par rate limit ET reCAPTCHA pour les soumissions
+// Protection par rate limit pour les soumissions (reCAPTCHA désactivé temporairement)
 router.post('/', 
   protect, 
   validate(submissionSchema), 
   submissionLimiter, 
-  verifyRecaptcha, 
   submitChallenge
 );
 

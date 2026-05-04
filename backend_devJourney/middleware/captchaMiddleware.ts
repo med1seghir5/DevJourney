@@ -9,6 +9,15 @@ import axios from 'axios';
  */
 export const verifyRecaptcha = async (req: Request, res: Response, next: NextFunction) => {
   const token = req.body.captchaToken;
+  const secretKey = process.env.RECAPTCHA_SECRET_KEY;
+
+  // Si la clé n'est pas configurée ou est la valeur par défaut, on ignore la validation
+  if (!secretKey || secretKey === 'votre_cle_secrete_ici') {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('RECAPTCHA_SECRET_KEY is not properly configured. Skipping validation.');
+    }
+    return next();
+  }
 
   // En mode développement, on peut sauter la vérification si nécessaire
   if (process.env.NODE_ENV === 'development' && !token) {
@@ -23,12 +32,6 @@ export const verifyRecaptcha = async (req: Request, res: Response, next: NextFun
   }
 
   try {
-    const secretKey = process.env.RECAPTCHA_SECRET_KEY;
-    if (!secretKey) {
-      console.warn('RECAPTCHA_SECRET_KEY is not defined. Skipping validation.');
-      return next();
-    }
-
     const response = await axios.post(
       `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${token}`
     );

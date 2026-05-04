@@ -49,6 +49,11 @@ const ChallengeSchema = new mongoose_1.Schema({
         enum: ['easy', 'medium', 'hard'],
         default: 'medium',
     },
+    teacherId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+    },
 }, {
     timestamps: true,
 });

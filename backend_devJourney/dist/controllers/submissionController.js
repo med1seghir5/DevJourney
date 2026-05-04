@@ -9,6 +9,9 @@ const Challenge_1 = __importDefault(require("../models/Challenge"));
 const User_1 = __importDefault(require("../models/User"));
 const constants_1 = require("../config/constants");
 const cacheService_1 = require("../services/cacheService");
+/**
+ * Soumettre une solution à un challenge
+ */
 const submitChallenge = async (req, res) => {
     try {
         const { challengeId, githubRepoLink } = req.body;
@@ -36,58 +39,47 @@ const submitChallenge = async (req, res) => {
     }
 };
 exports.submitChallenge = submitChallenge;
+/**
+ * Récupérer mes propres soumissions (Etudiant)
+ * OU les soumissions liées à mes challenges (Enseignant)
+ */
 const getMySubmissions = async (req, res) => {
     try {
         const userId = req.user._id;
-        const isTeacher = req.user.role === 'teacher' || req.user.role === 'admin';
-        // Pagination parameters
+        const userRole = req.user.role;
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 20;
         const skip = (page - 1) * limit;
-        let submissions;
-        let total;
-        if (isTeacher) {
-            // Check cache for teacher view (all submissions)
-            const cacheKey = `all_subs_p${page}_l${limit}`;
-            const cachedData = (0, cacheService_1.getCache)(cacheKey);
-            if (cachedData) {
-                res.status(200).json(cachedData);
-                return;
-            }
-            total = await Submission_1.default.countDocuments({});
-            submissions = await Submission_1.default.find({})
-                .populate('userId', 'username email')
-                .populate('challengeId', 'title difficulty xpReward')
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit);
-            const responseData = {
-                success: true,
-                count: submissions.length,
-                total,
-                page,
-                pages: Math.ceil(total / limit),
-                data: submissions,
-            };
-            (0, cacheService_1.setCache)(cacheKey, responseData, 60); // Cache for 1 minute
-            res.status(200).json(responseData);
+        let query = {};
+        if (userRole === 'teacher') {
+            // Un enseignant ne voit que les soumissions de SES challenges
+            const myChallenges = await Challenge_1.default.find({ teacherId: userId }).select('_id');
+            const challengeIds = myChallenges.map(c => c._id);
+            query = { challengeId: { $in: challengeIds } };
+        }
+        else if (userRole === 'admin') {
+            // L'admin voit tout
+            query = {};
         }
         else {
-            total = await Submission_1.default.countDocuments({ userId });
-            submissions = await Submission_1.default.find({ userId })
-                .populate('challengeId', 'title difficulty')
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit);
-            res.status(200).json({
-                success: true,
-                count: submissions.length,
-                total,
-                page,
-                pages: Math.ceil(total / limit),
-                data: submissions,
-            });
+            // L'étudiant ne voit que SES propres soumissions
+            query = { userId };
         }
+        const total = await Submission_1.default.countDocuments(query);
+        const submissions = await Submission_1.default.find(query)
+            .populate('userId', 'username email')
+            .populate('challengeId', 'title difficulty')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+        res.status(200).json({
+            success: true,
+            count: submissions.length,
+            total,
+            page,
+            pages: Math.ceil(total / limit),
+            data: submissions,
+        });
     }
     catch (error) {
         console.error('getMySubmissions error:', error);
@@ -95,9 +87,20 @@ const getMySubmissions = async (req, res) => {
     }
 };
 exports.getMySubmissions = getMySubmissions;
+/**
+ * Récupérer les soumissions en attente (Filtré par enseignant)
+ */
 const getPendingSubmissions = async (req, res) => {
     try {
-        const submissions = await Submission_1.default.find({ status: 'pending' })
+        const userId = req.user._id;
+        const userRole = req.user.role;
+        let query = { status: 'pending' };
+        if (userRole === 'teacher') {
+            const myChallenges = await Challenge_1.default.find({ teacherId: userId }).select('_id');
+            const challengeIds = myChallenges.map(c => c._id);
+            query.challengeId = { $in: challengeIds };
+        }
+        const submissions = await Submission_1.default.find(query)
             .populate('userId', 'username email')
             .populate('challengeId', 'title')
             .sort({ createdAt: 1 });
@@ -112,12 +115,17 @@ const getPendingSubmissions = async (req, res) => {
     }
 };
 exports.getPendingSubmissions = getPendingSubmissions;
+/**
+ * Valider ou rejeter une soumission
+ */
 const validateSubmission = async (req, res) => {
     try {
         const { submissionId } = req.params;
         const { status, feedback } = req.body;
+        const userId = req.user._id;
+        const userRole = req.user.role;
         if (!['approved', 'rejected'].includes(status)) {
-            res.status(400).json({ message: 'Invalid status (must be "approved" or "rejected")' });
+            res.status(400).json({ message: 'Invalid status' });
             return;
         }
         const submission = await Submission_1.default.findById(submissionId).populate('challengeId');
@@ -125,21 +133,23 @@ const validateSubmission = async (req, res) => {
             res.status(404).json({ message: 'Submission not found' });
             return;
         }
+        // Vérifier que l'enseignant est bien le créateur du challenge (Sécurité)
+        if (userRole === 'teacher') {
+            const challenge = submission.challengeId;
+            if (challenge.teacherId.toString() !== userId.toString()) {
+                res.status(403).json({ message: 'Not authorized to review this submission' });
+                return;
+            }
+        }
         if (status === 'approved' && submission.status !== 'approved') {
             const challenge = submission.challengeId;
             const xpAmount = constants_1.XP_REWARDS[challenge?.difficulty] || constants_1.XP_REWARDS.easy;
             await User_1.default.findByIdAndUpdate(submission.userId, { $inc: { completedChallenges: 1, xp: xpAmount } });
         }
-        else if (status === 'rejected' && submission.status === 'approved') {
-            const challenge = submission.challengeId;
-            const xpAmount = constants_1.XP_REWARDS[challenge?.difficulty] || constants_1.XP_REWARDS.easy;
-            await User_1.default.findByIdAndUpdate(submission.userId, { $inc: { completedChallenges: -1, xp: -xpAmount } });
-        }
         submission.status = status;
         if (feedback)
             submission.feedback = feedback;
         await submission.save();
-        // Invalidate caches
         (0, cacheService_1.clearCache)();
         res.status(200).json({ success: true, message: 'Submission reviewed successfully', submission });
     }
@@ -149,13 +159,23 @@ const validateSubmission = async (req, res) => {
     }
 };
 exports.validateSubmission = validateSubmission;
+/**
+ * Récupérer toutes les soumissions (Filtré par enseignant)
+ */
 const getAllSubmissions = async (req, res) => {
     try {
-        const submissions = await Submission_1.default.find({})
+        const userId = req.user._id;
+        const userRole = req.user.role;
+        let query = {};
+        if (userRole === 'teacher') {
+            const myChallenges = await Challenge_1.default.find({ teacherId: userId }).select('_id');
+            const challengeIds = myChallenges.map(c => c._id);
+            query = { challengeId: { $in: challengeIds } };
+        }
+        const submissions = await Submission_1.default.find(query)
             .populate('userId', 'username email')
             .populate('challengeId', 'title difficulty')
             .sort({ createdAt: -1 });
-        console.log(`[DEBUG] getAllSubmissions: Found ${submissions.length} total submissions in database.`);
         res.status(200).json({
             success: true,
             count: submissions.length,
@@ -163,7 +183,6 @@ const getAllSubmissions = async (req, res) => {
         });
     }
     catch (error) {
-        console.error('getAllSubmissions error:', error);
         res.status(500).json({ message: 'Failed to fetch all submissions' });
     }
 };
@@ -186,7 +205,6 @@ const getUserSubmissionsByUsername = async (req, res) => {
         });
     }
     catch (error) {
-        console.error('getUserSubmissionsByUsername error:', error);
         res.status(500).json({ message: 'Failed to fetch user submissions' });
     }
 };

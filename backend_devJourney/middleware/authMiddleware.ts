@@ -10,45 +10,61 @@ export interface AuthRequest extends Request {
  * Middleware de protection des routes (Authentification JWT)
  */
 export const protect = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-  let token;
-
-  // Extraction du token (Header Bearer ou Cookie)
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    token = req.headers.authorization.split(' ')[1];
-  } else if (req.cookies && req.cookies.auth_token) {
-    token = req.cookies.auth_token;
-  }
-
-  if (!token) {
-    res.status(401).json({ success: false, message: 'Non autorisé : Token manquant' });
-    return;
-  }
-
   try {
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) throw new Error('JWT_SECRET is not defined');
+    let token: string | undefined;
 
-    const decoded: any = jwt.verify(token, jwtSecret);
-    const currentUser = await User.findById(decoded.userId).select('-password');
+    // 1. Extraction du token
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+      token = req.headers.authorization.split(' ')[1];
+    } else if (req.cookies && req.cookies.auth_token) {
+      token = req.cookies.auth_token;
+    }
 
-    if (!currentUser) {
-      res.status(401).json({ success: false, message: 'L\'utilisateur lié à ce token n\'existe plus' });
+    // 2. Vérification de la présence du token
+    if (!token || typeof token !== 'string' || token === 'undefined' || token === 'null') {
+      res.status(401).json({ success: false, message: 'Non autorisé : Token absent ou invalide' });
       return;
     }
 
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      console.error('[CRITICAL] JWT_SECRET is not defined in .env');
+      res.status(500).json({ success: false, message: 'Erreur interne de configuration' });
+      return;
+    }
+
+    // 3. Vérification du JWT
+    // On entoure spécifiquement le verify pour attraper les erreurs de format (malformed)
+    let decoded: any;
+    try {
+      decoded = jwt.verify(token, jwtSecret);
+    } catch (jwtErr: any) {
+      const message = jwtErr.name === 'TokenExpiredError' 
+        ? 'Votre session a expiré.' 
+        : 'Token invalide ou corrompu.';
+      res.status(401).json({ success: false, message });
+      return;
+    }
+
+    // 4. Vérification de l'utilisateur
+    if (!decoded || !decoded.userId) {
+      res.status(401).json({ success: false, message: 'Payload du token invalide' });
+      return;
+    }
+
+    const currentUser = await User.findById(decoded.userId).select('-password');
+    if (!currentUser) {
+      res.status(401).json({ success: false, message: 'Utilisateur introuvable' });
+      return;
+    }
+
+    // Tout est bon
     req.user = currentUser;
     next();
   } catch (error: any) {
-    // Gestion propre des erreurs JWT
-    let message = 'Session invalide ou expirée';
-    
-    if (error.name === 'TokenExpiredError') {
-      message = 'Votre session a expiré. Veuillez vous reconnecter.';
-    } else if (error.name === 'JsonWebTokenError') {
-      message = 'Token invalide ou corrompu.';
-    }
-
-    res.status(401).json({ success: false, message });
+    // Catch final pour éviter tout crash du thread Node.js
+    console.error('[SECURITY] Erreur inattendue dans authMiddleware:', error.message);
+    res.status(500).json({ success: false, message: 'Erreur lors de l\'authentification' });
   }
 };
 
@@ -56,10 +72,14 @@ export const protect = async (req: AuthRequest, res: Response, next: NextFunctio
  * Middleware pour restreindre l'accès aux administrateurs
  */
 export const adminOnly = (req: AuthRequest, res: Response, next: NextFunction): void => {
-  if (req.user && req.user.role === 'admin') {
-    next();
-  } else {
-    res.status(403).json({ success: false, message: 'Accès refusé : Droits administrateur requis' });
+  try {
+    if (req.user && req.user.role === 'admin') {
+      next();
+    } else {
+      res.status(403).json({ success: false, message: 'Accès refusé : Droits administrateur requis' });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Erreur lors de la vérification des droits' });
   }
 };
 
@@ -67,9 +87,13 @@ export const adminOnly = (req: AuthRequest, res: Response, next: NextFunction): 
  * Middleware pour restreindre l'accès aux enseignants ou administrateurs
  */
 export const teacherOrAdminOnly = (req: AuthRequest, res: Response, next: NextFunction): void => {
-  if (req.user && (req.user.role === 'admin' || req.user.role === 'teacher')) {
-    next();
-  } else {
-    res.status(403).json({ success: false, message: 'Accès refusé : Droits enseignant ou administrateur requis' });
+  try {
+    if (req.user && (req.user.role === 'admin' || req.user.role === 'teacher')) {
+      next();
+    } else {
+      res.status(403).json({ success: false, message: 'Accès refusé : Droits requis' });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Erreur lors de la vérification des droits' });
   }
 };
