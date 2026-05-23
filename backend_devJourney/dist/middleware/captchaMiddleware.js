@@ -13,6 +13,14 @@ const axios_1 = __importDefault(require("axios"));
  */
 const verifyRecaptcha = async (req, res, next) => {
     const token = req.body.captchaToken;
+    const secretKey = process.env.RECAPTCHA_SECRET_KEY;
+    // Si la clé n'est pas configurée ou est la valeur par défaut, on ignore la validation
+    if (!secretKey || secretKey === 'votre_cle_secrete_ici') {
+        if (process.env.NODE_ENV !== 'production') {
+            console.warn('RECAPTCHA_SECRET_KEY is not properly configured. Skipping validation.');
+        }
+        return next();
+    }
     // En mode développement, on peut sauter la vérification si nécessaire
     if (process.env.NODE_ENV === 'development' && !token) {
         return next();
@@ -24,11 +32,6 @@ const verifyRecaptcha = async (req, res, next) => {
         });
     }
     try {
-        const secretKey = process.env.RECAPTCHA_SECRET_KEY;
-        if (!secretKey) {
-            console.warn('RECAPTCHA_SECRET_KEY is not defined. Skipping validation.');
-            return next();
-        }
         const response = await axios_1.default.post(`https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${token}`);
         const { success, score } = response.data;
         // Seuil de score reCAPTCHA v3 (0.0 = bot, 1.0 = humain)

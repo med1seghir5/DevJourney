@@ -222,3 +222,67 @@ export const getUserSubmissionsByUsername = async (req: Request, res: Response):
     res.status(500).json({ message: 'Failed to fetch user submissions' });
   }
 };
+
+/**
+ * Attribuer une note et un commentaire à une soumission (Teacher uniquement)
+ * Gère les re-notations en calculant le delta XP (nouveau - ancien score)
+ */
+export const gradeSubmission = async (req: any, res: Response): Promise<void> => {
+  try {
+    const { submissionId } = req.params;
+    const { score, comment } = req.body;
+    const teacherId = req.user._id;
+    const userRole = req.user.role;
+
+    // Validation du score
+    const parsedScore = parseInt(score, 10);
+    if (isNaN(parsedScore) || parsedScore < 0 || parsedScore > 1000) {
+      res.status(400).json({ message: 'Score invalide. Il doit être compris entre 0 et 1000.' });
+      return;
+    }
+
+    const submission = await Submission.findById(submissionId).populate('challengeId');
+    if (!submission) {
+      res.status(404).json({ message: 'Soumission introuvable' });
+      return;
+    }
+
+    // Vérifier que le teacher est le créateur du challenge
+    if (userRole === 'teacher') {
+      const challenge = submission.challengeId as any;
+      if (!challenge || challenge.teacherId.toString() !== teacherId.toString()) {
+        res.status(403).json({ message: 'Non autorisé : vous ne pouvez noter que les soumissions de vos propres challenges' });
+        return;
+      }
+    }
+
+    // Calculer le delta XP pour éviter l'inflation lors des re-notations
+    const previousScore = submission.score || 0;
+    const xpDelta = parsedScore - previousScore;
+
+    // Mettre à jour la soumission
+    submission.score = parsedScore;
+    if (comment !== undefined && comment !== null) {
+      submission.feedback = comment;
+    }
+    await submission.save();
+
+    // Appliquer le delta XP sur le compte de l'utilisateur
+    if (xpDelta !== 0) {
+      await User.findByIdAndUpdate(submission.userId, { $inc: { xp: xpDelta } });
+    }
+
+    clearCache();
+
+    res.status(200).json({
+      success: true,
+      message: 'Note attribuée avec succès',
+      submission,
+      xpAwarded: parsedScore,
+      xpDelta,
+    });
+  } catch (error) {
+    console.error('gradeSubmission error:', error);
+    res.status(500).json({ message: 'Erreur interne du serveur' });
+  }
+};

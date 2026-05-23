@@ -15,8 +15,10 @@ export const getLeaderboard = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    const total = await User.countDocuments({});
-    const users = await User.find({})
+    const teacherFilter = { role: 'user' };
+
+    const total = await User.countDocuments(teacherFilter);
+    const users = await User.find(teacherFilter)
       .select('username xp completedChallenges role profileImage')
       .sort({ xp: -1 })
       .skip(skip)

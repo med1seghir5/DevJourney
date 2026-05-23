@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { submitChallenge, validateSubmission, getMySubmissions, getPendingSubmissions, getAllSubmissions } from '../controllers/submissionController';
+import { submitChallenge, validateSubmission, getMySubmissions, getPendingSubmissions, getAllSubmissions, gradeSubmission } from '../controllers/submissionController';
 import { protect, teacherOrAdminOnly } from '../middleware/authMiddleware';
 import { submissionLimiter, speedLimiter } from '../middleware/rateLimiter';
 import { verifyRecaptcha } from '../middleware/captchaMiddleware';
@@ -23,5 +23,6 @@ router.post('/',
 );
 
 router.put('/:submissionId/validate', protect, teacherOrAdminOnly, validateSubmission);
+router.put('/:submissionId/grade', protect, teacherOrAdminOnly, gradeSubmission);
 
 export default router;

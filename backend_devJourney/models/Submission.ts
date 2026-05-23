@@ -6,6 +6,7 @@ export interface ISubmission extends Document {
   githubRepoLink: string;
   status: 'pending' | 'approved' | 'rejected';
   feedback?: string;
+  score?: number;
   submissionDate: Date;
 }
 
@@ -32,6 +33,10 @@ const SubmissionSchema: Schema = new Schema(
     },
     feedback: {
       type: String,
+      required: false,
+    },
+    score: {
+      type: Number,
       required: false,
     },
     submissionDate: {

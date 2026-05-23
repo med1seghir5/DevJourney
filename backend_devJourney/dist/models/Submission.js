@@ -58,6 +58,10 @@ const SubmissionSchema = new mongoose_1.Schema({
         type: String,
         required: false,
     },
+    score: {
+        type: Number,
+        required: false,
+    },
     submissionDate: {
         type: Date,
         default: Date.now,

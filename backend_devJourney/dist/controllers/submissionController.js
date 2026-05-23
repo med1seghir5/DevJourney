@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getUserSubmissionsByUsername = exports.getAllSubmissions = exports.validateSubmission = exports.getPendingSubmissions = exports.getMySubmissions = exports.submitChallenge = void 0;
+exports.gradeSubmission = exports.getUserSubmissionsByUsername = exports.getAllSubmissions = exports.validateSubmission = exports.getPendingSubmissions = exports.getMySubmissions = exports.submitChallenge = void 0;
 const Submission_1 = __importDefault(require("../models/Submission"));
 const Challenge_1 = __importDefault(require("../models/Challenge"));
 const User_1 = __importDefault(require("../models/User"));
@@ -209,3 +209,60 @@ const getUserSubmissionsByUsername = async (req, res) => {
     }
 };
 exports.getUserSubmissionsByUsername = getUserSubmissionsByUsername;
+/**
+ * Attribuer une note et un commentaire à une soumission (Teacher uniquement)
+ * Gère les re-notations en calculant le delta XP (nouveau - ancien score)
+ */
+const gradeSubmission = async (req, res) => {
+    try {
+        const { submissionId } = req.params;
+        const { score, comment } = req.body;
+        const teacherId = req.user._id;
+        const userRole = req.user.role;
+        // Validation du score
+        const parsedScore = parseInt(score, 10);
+        if (isNaN(parsedScore) || parsedScore < 0 || parsedScore > 1000) {
+            res.status(400).json({ message: 'Score invalide. Il doit être compris entre 0 et 1000.' });
+            return;
+        }
+        const submission = await Submission_1.default.findById(submissionId).populate('challengeId');
+        if (!submission) {
+            res.status(404).json({ message: 'Soumission introuvable' });
+            return;
+        }
+        // Vérifier que le teacher est le créateur du challenge
+        if (userRole === 'teacher') {
+            const challenge = submission.challengeId;
+            if (!challenge || challenge.teacherId.toString() !== teacherId.toString()) {
+                res.status(403).json({ message: 'Non autorisé : vous ne pouvez noter que les soumissions de vos propres challenges' });
+                return;
+            }
+        }
+        // Calculer le delta XP pour éviter l'inflation lors des re-notations
+        const previousScore = submission.score || 0;
+        const xpDelta = parsedScore - previousScore;
+        // Mettre à jour la soumission
+        submission.score = parsedScore;
+        if (comment !== undefined && comment !== null) {
+            submission.feedback = comment;
+        }
+        await submission.save();
+        // Appliquer le delta XP sur le compte de l'utilisateur
+        if (xpDelta !== 0) {
+            await User_1.default.findByIdAndUpdate(submission.userId, { $inc: { xp: xpDelta } });
+        }
+        (0, cacheService_1.clearCache)();
+        res.status(200).json({
+            success: true,
+            message: 'Note attribuée avec succès',
+            submission,
+            xpAwarded: parsedScore,
+            xpDelta,
+        });
+    }
+    catch (error) {
+        console.error('gradeSubmission error:', error);
+        res.status(500).json({ message: 'Erreur interne du serveur' });
+    }
+};
+exports.gradeSubmission = gradeSubmission;
