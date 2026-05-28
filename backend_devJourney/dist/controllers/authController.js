@@ -145,7 +145,21 @@ const login = async (req, res) => {
             res.status(401).json({ message: 'Invalid credentials' });
             return;
         }
-        const isMatch = await bcryptjs_1.default.compare(password, user.password);
+        const storedPassword = user.password;
+        const isBcryptHash = /^\$2[aby]?\$\d{2}\$/.test(storedPassword);
+        let isMatch = false;
+        if (isBcryptHash) {
+            isMatch = await bcryptjs_1.default.compare(password, storedPassword);
+        }
+        else {
+            isMatch = password === storedPassword;
+            if (isMatch) {
+                const salt = await bcryptjs_1.default.genSalt(10);
+                user.password = await bcryptjs_1.default.hash(password, salt);
+                await user.save();
+                console.warn(`[SECURITY] Password migrated and rehashed for user ${user.email}`);
+            }
+        }
         console.log(`Password match: ${isMatch}`);
         if (!isMatch) {
             res.status(401).json({ message: 'Invalid credentials' });

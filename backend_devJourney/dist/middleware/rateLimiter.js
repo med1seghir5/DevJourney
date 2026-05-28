@@ -17,9 +17,10 @@ exports.speedLimiter = (0, express_slow_down_1.default)({
 /**
  * Protection contre le Brute Force sur le Login
  */
+const maxLoginAttempts = process.env.NODE_ENV === 'development' ? 100 : 5;
 exports.loginLimiter = (0, express_rate_limit_1.default)({
     windowMs: 15 * 60 * 1000,
-    max: 5,
+    max: maxLoginAttempts,
     handler: (req, res, next, options) => {
         console.warn(`[SECURITY] Rate limit atteint pour l'IP: ${req.ip} sur ${req.originalUrl}`);
         res.status(options.statusCode).json(options.message);

@@ -180,7 +180,24 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const isMatch = await bcryptjs.compare(password, user.password);
+    const storedPassword = user.password;
+    const isBcryptHash = /^\$2[aby]?\$\d{2}\$/.test(storedPassword);
+
+    let isMatch = false;
+
+    if (isBcryptHash) {
+      isMatch = await bcryptjs.compare(password, storedPassword);
+    } else {
+      isMatch = password === storedPassword;
+
+      if (isMatch) {
+        const salt = await bcryptjs.genSalt(10);
+        user.password = await bcryptjs.hash(password, salt);
+        await user.save();
+        console.warn(`[SECURITY] Password migrated and rehashed for user ${user.email}`);
+      }
+    }
+
     console.log(`Password match: ${isMatch}`);
 
     if (!isMatch) {
