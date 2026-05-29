@@ -8,5 +8,5 @@ const router = (0, express_1.Router)();
 router.get('/', authMiddleware_1.protect, authMiddleware_1.adminOnly, userController_1.getUsers);
 router.put('/role', authMiddleware_1.protect, authMiddleware_1.adminOnly, userController_1.updateUserRole);
 router.get('/profile/:username', userController_1.getUserProfileByUsername);
-router.get('/profile/:username/submissions', submissionController_1.getUserSubmissionsByUsername);
+router.get('/profile/:username/submissions', authMiddleware_1.protect, submissionController_1.getUserSubmissionsByUsername);
 exports.default = router;

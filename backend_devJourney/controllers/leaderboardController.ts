@@ -15,7 +15,7 @@ export const getLeaderboard = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    const teacherFilter = { role: 'user' };
+    const teacherFilter = { role: { $ne: 'teacher' } };
 
     const total = await User.countDocuments(teacherFilter);
     const users = await User.find(teacherFilter)

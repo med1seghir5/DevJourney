@@ -199,7 +199,7 @@ export const getAllSubmissions = async (req: any, res: Response): Promise<void> 
   }
 };
 
-export const getUserSubmissionsByUsername = async (req: Request, res: Response): Promise<void> => {
+export const getUserSubmissionsByUsername = async (req: any, res: Response): Promise<void> => {
   try {
     const { username } = req.params;
     const user = await User.findOne({ username });
@@ -209,7 +209,18 @@ export const getUserSubmissionsByUsername = async (req: Request, res: Response):
       return;
     }
 
-    const submissions = await Submission.find({ userId: user._id })
+    const userRole = req.user?.role;
+    const teacherId = req.user?._id;
+
+    let query: any = { userId: user._id };
+
+    if (userRole === 'teacher') {
+      const myChallenges = await Challenge.find({ teacherId }).select('_id');
+      const challengeIds = myChallenges.map(c => c._id);
+      query.challengeId = { $in: challengeIds };
+    }
+
+    const submissions = await Submission.find(query)
       .populate('challengeId', 'title difficulty')
       .sort({ createdAt: -1 });
 
@@ -234,40 +245,40 @@ export const gradeSubmission = async (req: any, res: Response): Promise<void> =>
     const teacherId = req.user._id;
     const userRole = req.user.role;
 
-    // Validation du score
+    // Score validation
     const parsedScore = parseInt(score, 10);
     if (isNaN(parsedScore) || parsedScore < 0 || parsedScore > 1000) {
-      res.status(400).json({ message: 'Score invalide. Il doit être compris entre 0 et 1000.' });
+      res.status(400).json({ message: 'Invalid score. It must be between 0 and 1000.' });
       return;
     }
 
     const submission = await Submission.findById(submissionId).populate('challengeId');
     if (!submission) {
-      res.status(404).json({ message: 'Soumission introuvable' });
+      res.status(404).json({ message: 'Submission not found' });
       return;
     }
 
-    // Vérifier que le teacher est le créateur du challenge
+    // Verify teacher is the creator of the challenge
     if (userRole === 'teacher') {
       const challenge = submission.challengeId as any;
       if (!challenge || challenge.teacherId.toString() !== teacherId.toString()) {
-        res.status(403).json({ message: 'Non autorisé : vous ne pouvez noter que les soumissions de vos propres challenges' });
+        res.status(403).json({ message: 'Unauthorized: you can only grade submissions of your own challenges' });
         return;
       }
     }
 
-    // Calculer le delta XP pour éviter l'inflation lors des re-notations
+    // Calculate XP delta to avoid inflation during re-grading
     const previousScore = submission.score || 0;
     const xpDelta = parsedScore - previousScore;
 
-    // Mettre à jour la soumission
+    // Update submission
     submission.score = parsedScore;
     if (comment !== undefined && comment !== null) {
       submission.feedback = comment;
     }
     await submission.save();
 
-    // Appliquer le delta XP sur le compte de l'utilisateur
+    // Apply XP delta to the user's account
     if (xpDelta !== 0) {
       await User.findByIdAndUpdate(submission.userId, { $inc: { xp: xpDelta } });
     }
@@ -276,13 +287,13 @@ export const gradeSubmission = async (req: any, res: Response): Promise<void> =>
 
     res.status(200).json({
       success: true,
-      message: 'Note attribuée avec succès',
+      message: 'Grade assigned successfully',
       submission,
       xpAwarded: parsedScore,
       xpDelta,
     });
   } catch (error) {
     console.error('gradeSubmission error:', error);
-    res.status(500).json({ message: 'Erreur interne du serveur' });
+    res.status(500).json({ message: 'Internal server error' });
   }
 };

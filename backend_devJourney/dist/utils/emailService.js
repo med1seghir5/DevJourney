@@ -18,30 +18,30 @@ const sendOTP = async (to, otp) => {
     const mailOptions = {
         from: process.env.EMAIL_USER,
         to,
-        subject: 'Code de vérification - DevJourney',
-        text: `Votre code de vérification est: ${otp}. Ce code expire dans 10 minutes.`,
-        html: `<p>Votre code de vérification est: <strong style="font-size: 24px;">${otp}</strong>.</p><p>Ce code expire dans 10 minutes.</p>`,
+        subject: 'Verification Code - DevJourney',
+        text: `Your verification code is: ${otp}. This code expires in 10 minutes.`,
+        html: `<p>Your verification code is: <strong style="font-size: 24px;">${otp}</strong>.</p><p>This code expires in 10 minutes.</p>`,
     };
     console.log(`\n==============================================`);
-    console.log(`📩  E-MAIL DE VÉRIFICATION PRÊT`);
-    console.log(`📧  DESTINATAIRE: ${to}`);
-    console.log(`🔑  CODE OTP: ${otp}`);
+    console.log(`📩  VERIFICATION E-MAIL READY`);
+    console.log(`📧  RECIPIENT: ${to}`);
+    console.log(`🔑  OTP CODE: ${otp}`);
     console.log(`==============================================\n`);
     try {
         if (process.env.EMAIL_USER && !process.env.EMAIL_USER.includes('votre_email')) {
             const info = await transporter.sendMail(mailOptions);
-            console.log('✅ Email OTP envoyé avec succès :', info.response);
+            console.log('✅ OTP Email sent successfully :', info.response);
         }
         else {
-            console.log('⚠️  EMAIL NON ENVOYÉ: Vos identifiants SMTP ne sont pas configurés dans .env');
-            console.log('💡  Pour tester, utilisez le code OTP affiché ci-dessus dans la console.');
+            console.log('⚠️  EMAIL NOT SENT: Your SMTP credentials are not configured in .env');
+            console.log('💡  To test, use the OTP code displayed in the console above.');
         }
     }
     catch (error) {
-        console.error('❌ Erreur lors de l\'envois de l\'email OTP:', error);
-        // On ne bloque l'inscription que si on est sûr de vouloir envoyer un mail réel
+        console.error('❌ Error sending OTP email:', error);
+        // Only block registration if we are supposed to send a real email
         if (process.env.EMAIL_USER && !process.env.EMAIL_USER.includes('votre_email')) {
-            throw new Error('Erreur lors de l\'envoi de l\'email OTP');
+            throw new Error('Error sending OTP email');
         }
     }
 };

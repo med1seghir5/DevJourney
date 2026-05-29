@@ -89,11 +89,11 @@ app.use('/api/users', userRoutes_1.default);
 app.get('/', (req, res) => {
     res.send('DevJourney API is secured and running');
 });
-// Gestion globale des erreurs
+// Global error handling
 app.use((err, req, res, next) => {
     const statusCode = err instanceof ApiError_1.ApiError ? err.statusCode : (err.status || 500);
     const message = (process.env.NODE_ENV === 'production' && !(err instanceof ApiError_1.ApiError))
-        ? 'Une erreur interne est survenue.'
+        ? 'An internal server error occurred.'
         : err.message;
     if (err.name !== 'TokenExpiredError' && err.name !== 'JsonWebTokenError') {
         logger_1.default.error(`${req.method} ${req.url} - Status: ${statusCode} - Error: ${err.message}`, {

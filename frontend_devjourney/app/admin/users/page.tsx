@@ -42,7 +42,7 @@ export default function AdminUsersPage() {
       await api.put('/users/role', { userId, role: newRole });
       fetchUsers(); // Refresh list
     } catch (err) {
-       alert("Erreur lors du changement de rôle");
+       alert("Error changing user role");
     }
   };
 

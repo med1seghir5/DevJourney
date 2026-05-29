@@ -36,7 +36,7 @@ export default function VerifyEmailPage() {
     const currentEmail = email || localStorage.getItem('verification_email');
 
     if (!currentEmail) {
-      alert("Email non trouvé. Recommencez l'inscription.");
+      alert("Email not found. Please register again.");
       router.push('/auth/register');
       return;
     }
@@ -55,13 +55,13 @@ export default function VerifyEmailPage() {
         localStorage.setItem('accessToken', accessToken);
         localStorage.removeItem('verification_email');
         
-        alert("COMPTE VÉRIFIÉ !");
+        alert("ACCOUNT VERIFIED!");
         router.push('/dashboard');
       }
     } catch (error: any) {
 
-      const msg = error.response?.data?.message || "CODE INVALIDE";
-      alert(`ERREUR: ${msg}`);
+      const msg = error.response?.data?.message || "INVALID CODE";
+      alert(`ERROR: ${msg}`);
     }
   };
 

@@ -107,8 +107,8 @@ export default function SubmissionsSection() {
                 <th className="pb-2 px-2">BUILDER</th>
                 <th className="pb-2 px-2">CHALLENGE</th>
                 <th className="pb-2 px-2">REPO</th>
-                <th className="pb-2 px-2 text-center">STATUT</th>
-                <th className="pb-2 px-2 text-center">NOTE</th>
+                <th className="pb-2 px-2 text-center">STATUS</th>
+                <th className="pb-2 px-2 text-center">GRADE</th>
                 <th className="pb-2 px-2 text-right">DATE</th>
                 <th className="pb-2 px-2 text-right">ACTIONS</th>
               </tr>
@@ -147,7 +147,7 @@ export default function SubmissionsSection() {
                       </a>
                     </td>
 
-                    {/* Statut */}
+                    {/* Status */}
                     <td className="py-3 px-2 border-y-2 border-black/5 text-center">
                       <span className={`font-pixel text-[7px] px-2 py-1 border ${
                         sub.status === 'approved' ? 'border-lego-green text-lego-green' :
@@ -175,7 +175,7 @@ export default function SubmissionsSection() {
                     {/* Actions */}
                     <td className="py-3 px-2 border-y-2 border-r-2 border-black/5 last:rounded-r-sm text-right">
                       <div className="flex justify-end items-center gap-1 flex-wrap">
-                        {/* Valider / Rejeter pour les soumissions pending */}
+                        {/* Approve / Reject for pending submissions */}
                         {sub.status === 'pending' && (
                           <>
                             <LegoButton
@@ -195,7 +195,7 @@ export default function SubmissionsSection() {
                           </>
                         )}
 
-                        {/* Bouton NOTER — disponible pour toutes les soumissions */}
+                        {/* Grade Button — available for all submissions */}
                         <button
                           id={`grade-btn-${sub._id}`}
                           onClick={() => setModalSubmission(sub)}
@@ -204,12 +204,12 @@ export default function SubmissionsSection() {
                               ? 'border-lego-yellow text-lego-yellow hover:bg-lego-yellow/10'
                               : 'border-lego-blue text-lego-blue hover:bg-lego-blue/10'
                           }`}
-                          title={sub.score !== undefined ? 'Modifier la note' : 'Attribuer une note'}
+                          title={sub.score !== undefined ? 'Modify grade' : 'Assign grade'}
                         >
-                          {sub.score !== undefined ? '✏ NOTER' : '⭐ NOTER'}
+                          {sub.score !== undefined ? '✏ GRADE' : '⭐ GRADE'}
                         </button>
 
-                        {/* Changer de statut pour les soumissions déjà traitées */}
+                        {/* Swap status for already processed submissions */}
                         {sub.status !== 'pending' && (
                           <button
                             onClick={() => handleValidate(sub._id, sub.status === 'approved' ? 'rejected' : 'approved')}

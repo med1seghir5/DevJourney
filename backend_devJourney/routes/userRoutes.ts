@@ -8,6 +8,6 @@ const router = Router();
 router.get('/', protect, adminOnly, getUsers);
 router.put('/role', protect, adminOnly, updateUserRole);
 router.get('/profile/:username', getUserProfileByUsername);
-router.get('/profile/:username/submissions', getUserSubmissionsByUsername);
+router.get('/profile/:username/submissions', protect, getUserSubmissionsByUsername);
 
 export default router;
